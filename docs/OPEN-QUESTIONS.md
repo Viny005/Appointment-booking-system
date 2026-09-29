@@ -1,18 +1,23 @@
-# Offene Entscheidungen und Freigaben
+# Offene Fragen und Freigabegrenzen
 
-Die Dokumentation ist vollständig als erste Review-Baseline, die folgenden projektspezifischen Angaben bleiben bewusst offen. Sie sind keine bereits bestätigten Nutzeranforderungen.
+Stand: 2026-09-29. Entscheidungen für den ersten Implementierungssprint sind getroffen; Produktionsfreigaben sind separat nachzuweisen.
 
-| Thema | Arbeitsannahme | Zuständig | Spätestens zu entscheiden |
-|---|---|---|---|
-| Produktname, Branding | Appointment Booking System; Design-Tokens | Produktverantwortung | Vor UI-Implementierung |
-| Oberflächensprache | Deutsch gemäß Archiv | Produktverantwortung | Vor UI-Implementierung |
-| Hosting, Region, Budget | Node-Laufzeit, PostgreSQL, Worker/Scheduler | Betrieb | Vor Deployment-Implementierung |
-| Mailprovider, Absender | MailGateway; Retry und Zustellstatus | Betrieb | Vor Integrationsabnahme |
-| Bildspeicher | MediaStorage | Betrieb | Vor Profilbild-Implementierung |
-| Betreibertexte, Verarbeitung, Fristen | Archiv: 12/6 Monate; keine Rechtssicherheitszusage | Betreiber/Datenschutzverantwortung | Vor Produktion |
-| Fachliche Grenzfälle dieser Baseline | D1/D2, N2, B2: Zeitgrenzen, Status, Gäste und Änderungen | Fachverantwortung | Vor betroffener Implementierung |
-| Lastprofil und Wiederherstellungsziele | A10/A07: initiale messbare Ziele | Betrieb und Entwicklung | Vor Last-/Betriebsabnahme |
-| Auth-Bibliothek und Versionen | DB-Sessions, Passwortlogin, Server-Guards | Entwicklung | Vor Auth-Implementierung; Kompatibilität nachweisen |
-| Online-Termine | Konfigurierter Link; keine automatische Teams-Verknüpfung | Betreiber | Vor Aktivierung eines Online-Services |
+## Implementation blockers
 
-Architekturänderungen werden als neue oder ersetzende [ADR](../adr/README.md) dokumentiert. Die Freigaben ändern nichts am Ausschluss von E-Commerce.
+**0 — keine offenen Einträge.**
+
+Die abgeschlossenen Entscheidungen stehen in [READY-FOR-IMPLEMENTATION](READY-FOR-IMPLEMENTATION.md): deutscher V1-Arbeitstitel, Meetingpolicy/-modi, interne Änderungsregeln, Profil-/Kontolebenszyklus, Zeitzone, Reminder-Grenze, konkrete Authentifizierungsbibliothek, Adapterverträge und lokale Adapter. Branding verwendet zunächst neutrale Tokens und den Arbeitstitel; spätere Gestaltung blockiert keinen Code.
+
+## Go-live blockers
+
+| Offener Produktionsnachweis | Verantwortlich | Erforderliches Ergebnis |
+|---|---|---|
+| Betreiberidentität und echte Impressums-/Datenschutzangaben | Betreiber | Alle zutreffenden DDG-/DSGVO-Felder statt Platzhaltern, Kontakt-/Rechteprozess |
+| Rechtliche Qualifikation des Buchungsvorgangs | Betreiber mit fachkundiger Prüfung | Entscheidung Terminorganisation/Vertrag; BFSG/BFSGV und VSBG §§36/37 geprüft, erforderliche Informationen umgesetzt |
+| Rechtsgrundlagen und finale Aufbewahrung | Betreiber/Datenschutzverantwortung | Zwecke, Pflichttelefon, Gästeverarbeitung, 12/6-Monatswerte und Backupfenster freigegeben |
+| Hosting, Datenbank, Region, Medien, Monitoring | Betrieb | Konkrete Provider, Zugriffsschutz, erforderliche AVV/Unterauftragnehmer-/Transferprüfung |
+| Domäne, TLS, HSTS und Mailabsender | Betrieb | Domaininhaberschaft, HTTPS, Absenderauthentifizierung, Zustell- und Headerprüfung |
+| Produktive Integration und Betriebsabnahme | Betrieb/Entwicklung | Gewählte Provider bestehen Adaptertests; Last-, Backup-/Restore-, Alert-, Session-, Upload- und Barrierefreiheitstests bestanden |
+| Öffentliche Inhalte und Online-/Telefon-/Präsenzangaben | Betreiber | Richtige Profile, Services, Orte/Nummern/geeignete manuelle Links, keine Demo-Daten |
+
+Die detaillierten Nachweise stehen in der [Deutschland-Checkliste](LEGAL-COMPLIANCE-DE.md) und [S3](spec/S3-inbetriebnahme.md). Kein offener Punkt gestattet einen stillen Wechsel zu Tracking, Kundenkonten, Verkauf oder Payment. Änderungen an bereits entschiedenen Regeln erfordern bewusste Änderung der Spezifikation und ggf. neue ADR.

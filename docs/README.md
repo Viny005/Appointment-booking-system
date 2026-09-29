@@ -11,12 +11,14 @@ Die Trennung ist verbindlich: konkrete Frameworks, Bibliotheken, Klassen, Datenb
 
 Die Spezifikation und Architektur referenzieren sich über stabile IDs wie `UC-01`, `AF-01`, `NFR-CON-01` und `ADR-001`.
 
-Vor Implementierung verbleibende, nicht blockierende Entscheidungen: [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md).
+Ausschließlich vor Produktion verbleibende Freigaben: [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md).
 
 ## Navigation und Verbindlichkeit
 
 [Projekt](../README.md) · [ADRs](../adr/README.md) · [Rückverfolgbarkeit](TRACEABILITY.md) · [Quellen](SOURCES.md) · [Prüfung](VALIDATION.md).
 
-Die Spezifikation ist die fachliche Quelle. Architektur konkretisiert sie; Abweichungen erfordern eine dokumentierte fachliche Änderung. `Accepted` in übernommenen ADRs bedeutet Auswahl für dieses Zielbild, nicht Implementierungs- oder Produktionsfreigabe. Neu präzisierte Regeln werden im Review bestätigt. Offene Betreiberentscheidungen bleiben sichtbar.
+Die Spezifikation ist die fachliche Quelle. Architektur konkretisiert sie; Abweichungen erfordern eine dokumentierte fachliche Änderung. `Accepted` bedeutet eine getroffene Architekturentscheidung; `Proposed` einen noch nicht beschlossenen Vorschlag, `Superseded` eine abgelöste und `Rejected` eine verworfene Entscheidung. Die Implementierungsbaseline ist entschieden; ihre PR bleibt zur abschließenden Review offen. Produktionsfreigaben bleiben getrennt sichtbar.
 
 IDs: G (Ziele), NG (Nichtziele), SC (Erfolgskriterien), CON (Constraints), UC (Anwendungsfälle), AF (Funktionen), NFR (Qualitätsanforderungen), QG (Architekturziele), QS (Prüfszenarien), R (Risiken), ADR (Entscheidungen). Die Quelldefinition steht genau einmal als Überschrift oder erste Tabellenzelle; Register und Matrix referenzieren sie per Link.
+
+[Implementierungsbereitschaft](READY-FOR-IMPLEMENTATION.md) · [Deutschland-Checkliste](LEGAL-COMPLIANCE-DE.md).
