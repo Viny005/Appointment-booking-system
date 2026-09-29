@@ -2,7 +2,7 @@
 
 **Status: READY — Implementation blockers = 0.** Stand: 2026-09-29.
 
-READY bedeutet, dass die fachlichen und technischen Entscheidungen für den ersten Code getroffen sind. Es ist weder eine Produktionsfreigabe noch ein Nachweis einer bereits getesteten Anwendung. PR #1 bleibt für die abschließende Review offen und wird nicht automatisch gemergt.
+READY bedeutet, dass die fachlichen und technischen Entscheidungen für den ersten Code getroffen sind. Es ist keine Produktionsfreigabe. PR #1 wurde gemergt; aktueller Implementierungsumfang und Prüfungen stehen im [Foundation-Bericht](FOUNDATION.md).
 
 ## Fest entschiedener Scope und Stack
 
@@ -48,4 +48,4 @@ Nur die in [OPEN-QUESTIONS](OPEN-QUESTIONS.md) aufgelisteten Betreiber-/Produkti
 - [x] Alle neuen UC/AF/NFR/QS/ADR in [Register](ID-REGISTRY.md) und [Matrix](TRACEABILITY.md) verknüpft.
 - [x] Keine offenen fachlichen oder Architekturentscheidungen vor dem ersten Code.
 
-Die tatsächlich ausgeführten Dokumentationsprüfungen und ihre Grenzen stehen in [VALIDATION](VALIDATION.md). Der nächste Auftrag kann Code beginnen; dieser Auftrag liefert ausschließlich Dokumentation und Dokumentationsprüfer.
+Die Dokumentationsprüfungen stehen in [VALIDATION](VALIDATION.md); der erste Implementierungssprint ist separat im Foundation-Bericht abgegrenzt.

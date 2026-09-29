@@ -41,6 +41,8 @@ Belege: [Release-Paketmanifest](https://raw.githubusercontent.com/better-auth/be
 
 ## Konsequenzen
 
-Kein offener Bibliotheksentscheid und keine selbst entwickelte Passwortkryptografie. Projektpolicy für exakte Timeouts/Ownership und Fail-closed-Reset bleibt zu implementieren. Kompatibilität ist anhand deklarierter Peers und Integrationsdokumentation belegt, nicht durch einen hier unerlaubten App-Prototyp. Der erste Auth-Sprint muss QS-27 einschließlich konkurrierender Resets und Ausfällen nachweisen; Versionsänderungen benötigen erneute Metadaten-/Sicherheitsprüfung. Es wird kein fertiger Auth-Code behauptet.
+Foundation: Die Hauptbaseline ist unverändert installiert. Credentials, Prisma-Sessions, Logout und serverseitige 30-Minuten-/8-Stunden-Prüfung sind implementiert. Reset/Passwortänderung, Konto-/Rollenverwaltung und Sicherheitsgeneration bleiben nach Sprintbegrenzung ausstehend; entsprechende HTTP-Routen sind gesperrt. Vollständiger QS-27-Nachweis folgt später. Transitive Korrekturen und Prüfungen: [Foundation-Bericht](../docs/FOUNDATION.md).
+
+Kein offener Bibliotheksentscheid und keine selbst entwickelte Passwortkryptografie. Die ursprüngliche Entscheidung beruhte auf Paketmetadaten; der Foundation-Sprint ergänzt Laufzeitprüfungen für den oben abgegrenzten Umfang. Ownership und Fail-closed-Reset bleiben zu implementieren und einschließlich konkurrierender Resets/Ausfälle gemäß QS-27 nachzuweisen. Versionsänderungen benötigen erneute Metadaten-/Sicherheitsprüfung. Die Auth-Basis ist keine vollständige Auth-Verwaltung oder Produktionsfreigabe.
 
 Anforderungen: [NFR-SEC-01](../docs/spec/N1-nichtfunktional.md#nfr-sec-01), [NFR-SEC-02](../docs/spec/N1-nichtfunktional.md#nfr-sec-02), [NFR-SEC-04](../docs/spec/N1-nichtfunktional.md#nfr-sec-04), [AF-21](../docs/spec/F3-anwendungsfunktionen.md#af-21). Nachweis: [QS-27](../docs/arch/A10-quality-requirements.md#qs-27).

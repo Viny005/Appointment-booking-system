@@ -16,6 +16,8 @@ Entwicklungsbaseline: Next.js 16.3.7, React/ReactDOM 19.3.0, TypeScript 5.9.3, P
 
 ## 2.2 Fachlich bedingte Constraints
 
+Installierter Stand und begründete transitive Overrides: [Foundation-Bericht](../FOUNDATION.md). Hauptversionen unverändert; Node-Patchversion und Lockfile sind versioniert.
+
 - Kein Kundenlogin.
 - Kein Payment.
 - `.ics` statt verpflichtender Kalenderkonto-Verknüpfung.
