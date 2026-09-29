@@ -42,6 +42,7 @@ def main():
     files = sorted(p for p in ROOT.rglob('*.md') if '.git' not in p.parts)
     texts = {p: outside_fences(p.read_text(encoding='utf-8-sig')) for p in files}
     errors, definitions, all_ids, external = [], {}, set(), set()
+    reference_files = {}
     count = 0
     for p, text in texts.items():
         label = p.relative_to(ROOT).as_posix()
@@ -50,6 +51,8 @@ def main():
             if n > 1:
                 errors.append(f'{label}: duplicate anchor {a}')
         all_ids.update(re.findall(r'\b' + ID + r'\b', text))
+        for ident in re.findall(r'\[(' + ID + r')\]\(', text):
+            reference_files.setdefault(ident, set()).add(p)
         for a in re.findall(r'<a id="([^"]+)"', text):
             ident = a.upper()
             if re.fullmatch(ID, ident):
@@ -67,6 +70,9 @@ def main():
             else:
                 links.append(refs[key])
         links.extend(re.findall(r'<(https?://[^>]+)>', text))
+        # Validate reference definitions even when unused, and HTML link/image targets.
+        links.extend(refs.values())
+        links.extend(re.findall(r'(?:href|src)=[\'"]([^\'"]+)[\'"]', text))
         for target in links:
             count += 1
             target = target.strip('<>')
@@ -95,27 +101,56 @@ def main():
     registry = texts.get(ROOT / 'docs/ID-REGISTRY.md', '')
     matrix_ids = set(re.findall(r'\[(' + ID + r')\]\(', matrix))
     registry_ids = set(re.findall(r'\[(' + ID + r')\]\(', registry))
-    required = {i for i in definitions if i.split('-')[0] in ('G', 'NG', 'SC', 'CON', 'UC', 'AF', 'NFR', 'QG')}
+    required = set(definitions)
     for ident in sorted(required - matrix_ids):
         errors.append(f'Missing traceability: {ident}')
     for ident in sorted(definitions.keys() - registry_ids):
         errors.append(f'Missing registry entry: {ident}')
+    for ident, source in definitions.items():
+        substantive = reference_files.get(ident, set()) - {source, ROOT / 'docs/ID-REGISTRY.md'}
+        if not substantive:
+            errors.append(f'Orphan definition: {ident}')
+    # A name in the matrix alone is insufficient: each UC/AF/NFR needs both
+    # an architecture link and a quality scenario in the same mapping row.
+    matrix_rows = [line for line in matrix.splitlines() if line.startswith('|')]
+    for ident in sorted(i for i in required if i.startswith(('UC-', 'AF-', 'NFR-'))):
+        rows = [line for line in matrix_rows if f'[{ident}](' in line]
+        if not any(re.search(r'\]\(arch/A\d{2}[^)]*\)', row) and re.search(r'\[QS-\d{2}\]\(', row) for row in rows):
+            errors.append(f'Incomplete requirement/architecture/scenario chain: {ident}')
+    for ident in sorted(i for i in required if i.startswith('QS-')):
+        rows = [line for line in matrix_rows if f'[{ident}](' in line]
+        if not any(re.search(r'\[(?:UC-\d{2}|AF-\d{2}|NFR-[A-Z0-9]+-\d{2})\]\(', row) for row in rows):
+            errors.append(f'Quality scenario has no requirement: {ident}')
     for n in range(1, 13):
         if len(list((ROOT / 'docs/arch').glob(f'A{n:02}-*.md'))) != 1:
             errors.append(f'Missing or duplicate arc42 chapter A{n:02}')
     for code in ['P1', 'P2', 'F1', 'F2', 'F3', 'D1', 'D2', 'B1', 'B2', 'S1', 'S3', 'N1', 'N2', 'E2']:
         if not list((ROOT / 'docs/spec').glob(f'{code}-*.md')):
             errors.append(f'Missing Siedersleben block {code}')
-    for n in range(1, 11):
+    adr_ids = sorted(i for i in definitions if i.startswith('ADR-'))
+    for ident in adr_ids:
+        n = int(ident[-3:])
         matches = list((ROOT / 'adr').glob(f'{n:03}-*.md'))
         if len(matches) != 1:
             errors.append(f'Missing or duplicate ADR {n:03}')
             continue
         text = texts[matches[0]]
+        status = re.search(r'^\*\*Status:\*\* (.+?)\\?$', text, re.M)
+        if not status or status[1].strip() not in ('Proposed', 'Accepted', 'Superseded', 'Rejected'):
+            errors.append(f'ADR {n:03}: ambiguous or missing status')
         for section in ['Kontext', 'Entscheidung', 'Betrachtete Alternativen', 'Konsequenzen']:
             m = re.search(r'^## ' + section + r'\s*\n(.*?)(?=^## |\Z)', text, re.M | re.S)
             if not m or len(m[1].strip()) < 20:
                 errors.append(f'ADR {n:03}: empty section {section}')
+
+    for path in (ROOT / 'adr').glob('[0-9][0-9][0-9]-*.md'):
+        if 'ADR-' + path.name[:3] not in definitions:
+            errors.append(f'{path.name}: missing canonical ADR definition')
+
+    # Structural gates; semantic review and future application tests remain manual.
+    for name in ['LEGAL-COMPLIANCE-DE.md', 'READY-FOR-IMPLEMENTATION.md', 'OPEN-QUESTIONS.md']:
+        if ROOT / 'docs' / name not in texts:
+            errors.append(f'Missing baseline document: {name}')
 
     if args.external:
         def check(url):

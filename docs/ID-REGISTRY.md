@@ -1,6 +1,6 @@
 # Register stabiler Identifikatoren
 
-Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zuerst im Quelldokument definieren. Die [Matrix](TRACEABILITY.md) enthält die Zuordnung.
+Kanonische Definitionen bleiben unter bestehenden IDs erhalten. Die [Matrix](TRACEABILITY.md) verknüpft jede Anforderung mit Architektur und geplantem Nachweis.
 
 | ID | Kanonische Definition |
 |---|---|
@@ -14,6 +14,7 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `ADR-008` | [ADR-008](../adr/008-retention-anonymization.md#adr-008) |
 | `ADR-009` | [ADR-009](../adr/009-meeting-provider-abstraction.md#adr-009) |
 | `ADR-010` | [ADR-010](../adr/010-no-ecommerce.md#adr-010) |
+| `ADR-011` | [ADR-011](../adr/011-authentication-library.md#adr-011) |
 | `AF-01` | [AF-01](spec/F3-anwendungsfunktionen.md#af-01) |
 | `AF-02` | [AF-02](spec/F3-anwendungsfunktionen.md#af-02) |
 | `AF-03` | [AF-03](spec/F3-anwendungsfunktionen.md#af-03) |
@@ -38,6 +39,14 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `AF-22` | [AF-22](spec/F3-anwendungsfunktionen.md#af-22) |
 | `AF-23` | [AF-23](spec/F3-anwendungsfunktionen.md#af-23) |
 | `AF-24` | [AF-24](spec/F3-anwendungsfunktionen.md#af-24) |
+| `AF-25` | [AF-25](spec/F3-anwendungsfunktionen.md#af-25) |
+| `AF-26` | [AF-26](spec/F3-anwendungsfunktionen.md#af-26) |
+| `AF-27` | [AF-27](spec/F3-anwendungsfunktionen.md#af-27) |
+| `AF-28` | [AF-28](spec/F3-anwendungsfunktionen.md#af-28) |
+| `AF-29` | [AF-29](spec/F3-anwendungsfunktionen.md#af-29) |
+| `AF-30` | [AF-30](spec/F3-anwendungsfunktionen.md#af-30) |
+| `AF-31` | [AF-31](spec/F3-anwendungsfunktionen.md#af-31) |
+| `AF-32` | [AF-32](spec/F3-anwendungsfunktionen.md#af-32) |
 | `CON-01` | [CON-01](spec/P1-constraints.md#con-01) |
 | `CON-02` | [CON-02](spec/P1-constraints.md#con-02) |
 | `CON-03` | [CON-03](spec/P1-constraints.md#con-03) |
@@ -72,6 +81,10 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `NFR-CON-01` | [NFR-CON-01](spec/N1-nichtfunktional.md#nfr-con-01) |
 | `NFR-CON-02` | [NFR-CON-02](spec/N1-nichtfunktional.md#nfr-con-02) |
 | `NFR-CON-03` | [NFR-CON-03](spec/N1-nichtfunktional.md#nfr-con-03) |
+| `NFR-CON-04` | [NFR-CON-04](spec/N1-nichtfunktional.md#nfr-con-04) |
+| `NFR-CON-05` | [NFR-CON-05](spec/N1-nichtfunktional.md#nfr-con-05) |
+| `NFR-CON-06` | [NFR-CON-06](spec/N1-nichtfunktional.md#nfr-con-06) |
+| `NFR-CON-07` | [NFR-CON-07](spec/N1-nichtfunktional.md#nfr-con-07) |
 | `NFR-MNT-01` | [NFR-MNT-01](spec/N1-nichtfunktional.md#nfr-mnt-01) |
 | `NFR-MNT-02` | [NFR-MNT-02](spec/N1-nichtfunktional.md#nfr-mnt-02) |
 | `NFR-MNT-03` | [NFR-MNT-03](spec/N1-nichtfunktional.md#nfr-mnt-03) |
@@ -82,6 +95,9 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `NFR-PRIV-03` | [NFR-PRIV-03](spec/N1-nichtfunktional.md#nfr-priv-03) |
 | `NFR-PRIV-04` | [NFR-PRIV-04](spec/N1-nichtfunktional.md#nfr-priv-04) |
 | `NFR-PRIV-05` | [NFR-PRIV-05](spec/N1-nichtfunktional.md#nfr-priv-05) |
+| `NFR-PRIV-06` | [NFR-PRIV-06](spec/N1-nichtfunktional.md#nfr-priv-06) |
+| `NFR-PRIV-07` | [NFR-PRIV-07](spec/N1-nichtfunktional.md#nfr-priv-07) |
+| `NFR-PRIV-08` | [NFR-PRIV-08](spec/N1-nichtfunktional.md#nfr-priv-08) |
 | `NFR-SEC-01` | [NFR-SEC-01](spec/N1-nichtfunktional.md#nfr-sec-01) |
 | `NFR-SEC-02` | [NFR-SEC-02](spec/N1-nichtfunktional.md#nfr-sec-02) |
 | `NFR-SEC-03` | [NFR-SEC-03](spec/N1-nichtfunktional.md#nfr-sec-03) |
@@ -90,11 +106,14 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `NFR-SEC-06` | [NFR-SEC-06](spec/N1-nichtfunktional.md#nfr-sec-06) |
 | `NFR-SEC-07` | [NFR-SEC-07](spec/N1-nichtfunktional.md#nfr-sec-07) |
 | `NFR-SEC-08` | [NFR-SEC-08](spec/N1-nichtfunktional.md#nfr-sec-08) |
+| `NFR-SEC-09` | [NFR-SEC-09](spec/N1-nichtfunktional.md#nfr-sec-09) |
+| `NFR-SEC-10` | [NFR-SEC-10](spec/N1-nichtfunktional.md#nfr-sec-10) |
 | `NFR-UX-01` | [NFR-UX-01](spec/N1-nichtfunktional.md#nfr-ux-01) |
 | `NFR-UX-02` | [NFR-UX-02](spec/N1-nichtfunktional.md#nfr-ux-02) |
 | `NFR-UX-03` | [NFR-UX-03](spec/N1-nichtfunktional.md#nfr-ux-03) |
 | `NFR-UX-04` | [NFR-UX-04](spec/N1-nichtfunktional.md#nfr-ux-04) |
 | `NFR-UX-05` | [NFR-UX-05](spec/N1-nichtfunktional.md#nfr-ux-05) |
+| `NFR-UX-06` | [NFR-UX-06](spec/N1-nichtfunktional.md#nfr-ux-06) |
 | `NG-01` | [NG-01](spec/P1-ziele-rahmenbedingungen.md#ng-01) |
 | `NG-02` | [NG-02](spec/P1-ziele-rahmenbedingungen.md#ng-02) |
 | `NG-03` | [NG-03](spec/P1-ziele-rahmenbedingungen.md#ng-03) |
@@ -124,6 +143,17 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `QS-14` | [QS-14](arch/A10-quality-requirements.md#qs-14) |
 | `QS-15` | [QS-15](arch/A10-quality-requirements.md#qs-15) |
 | `QS-16` | [QS-16](arch/A10-quality-requirements.md#qs-16) |
+| `QS-17` | [QS-17](arch/A10-quality-requirements.md#qs-17) |
+| `QS-18` | [QS-18](arch/A10-quality-requirements.md#qs-18) |
+| `QS-19` | [QS-19](arch/A10-quality-requirements.md#qs-19) |
+| `QS-20` | [QS-20](arch/A10-quality-requirements.md#qs-20) |
+| `QS-21` | [QS-21](arch/A10-quality-requirements.md#qs-21) |
+| `QS-22` | [QS-22](arch/A10-quality-requirements.md#qs-22) |
+| `QS-23` | [QS-23](arch/A10-quality-requirements.md#qs-23) |
+| `QS-24` | [QS-24](arch/A10-quality-requirements.md#qs-24) |
+| `QS-25` | [QS-25](arch/A10-quality-requirements.md#qs-25) |
+| `QS-26` | [QS-26](arch/A10-quality-requirements.md#qs-26) |
+| `QS-27` | [QS-27](arch/A10-quality-requirements.md#qs-27) |
 | `R-01` | [R-01](arch/A11-risks-and-technical-debts.md#r-01) |
 | `R-02` | [R-02](arch/A11-risks-and-technical-debts.md#r-02) |
 | `R-03` | [R-03](arch/A11-risks-and-technical-debts.md#r-03) |
@@ -161,3 +191,8 @@ Automatisch aus den kanonischen Definitionen erzeugter Index; neue IDs immer zue
 | `UC-18` | [UC-18](spec/F2-anwendungsfaelle.md#uc-18) |
 | `UC-19` | [UC-19](spec/F2-anwendungsfaelle.md#uc-19) |
 | `UC-20` | [UC-20](spec/F2-anwendungsfaelle.md#uc-20) |
+| `UC-21` | [UC-21](spec/F2-anwendungsfaelle.md#uc-21) |
+| `UC-22` | [UC-22](spec/F2-anwendungsfaelle.md#uc-22) |
+| `UC-23` | [UC-23](spec/F2-anwendungsfaelle.md#uc-23) |
+| `UC-24` | [UC-24](spec/F2-anwendungsfaelle.md#uc-24) |
+| `UC-25` | [UC-25](spec/F2-anwendungsfaelle.md#uc-25) |
