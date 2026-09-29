@@ -1,0 +1,20 @@
+@startuml
+actor Kunde
+participant Web
+participant AvailabilityEngine
+participant BookingService
+database PostgreSQL
+participant OutboxWorker
+Kunde -> Web: Buchungsdaten
+Web -> AvailabilityEngine: verfügbare Slots
+AvailabilityEngine --> Web: Slots
+Kunde -> Web: bestätigen
+Web -> BookingService: CreateAppointment
+BookingService -> PostgreSQL: BEGIN + Locks + Revalidierung
+BookingService -> PostgreSQL: Termin + Belegungen + Outbox
+BookingService -> PostgreSQL: COMMIT
+PostgreSQL --> BookingService: committed
+OutboxWorker -> PostgreSQL: faellige Auftraege nach Commit lesen
+BookingService --> Web: success
+Web --> Kunde: Bestätigung + ICS
+@enduml

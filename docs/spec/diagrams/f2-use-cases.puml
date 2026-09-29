@@ -1,0 +1,24 @@
+@startuml
+left to right direction
+actor Kunde
+actor Berater
+actor Administrator
+rectangle System {
+  usecase "Profil wählen" as UC1
+  usecase "Service wählen" as UC2
+  usecase "Teilnehmer wählen" as UC3
+  usecase "Datum/Uhrzeit wählen" as UC4
+  usecase "Termin bestätigen" as UC6
+  usecase "Termin verwalten" as UC8
+  usecase "Verfügbarkeit pflegen" as UC12
+  usecase "Profile/Services/Beziehungen verwalten" as UCA
+}
+Kunde --> UC1
+Kunde --> UC2
+Kunde --> UC3
+Kunde --> UC4
+Kunde --> UC6
+Kunde --> UC8
+Berater --> UC12
+Administrator --> UCA
+@enduml

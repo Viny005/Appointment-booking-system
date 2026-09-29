@@ -1,0 +1,19 @@
+@startuml
+entity AdvisorProfile
+entity Service
+entity WeeklyAvailability
+entity AvailabilityException
+entity ProfileRelation
+entity Appointment
+entity AppointmentParticipant
+entity AppointmentGuest
+entity InternalUser
+AdvisorProfile ||--o{ Service
+AdvisorProfile ||--o{ WeeklyAvailability
+AdvisorProfile ||--o{ AvailabilityException
+AdvisorProfile ||--o{ ProfileRelation
+Appointment ||--|{ AppointmentParticipant
+Appointment ||--o{ AppointmentGuest
+AdvisorProfile ||--o{ AppointmentParticipant
+InternalUser ||--o| AdvisorProfile
+@enduml

@@ -1,0 +1,13 @@
+@startuml
+node Browser
+node "Next.js Runtime" as App
+database PostgreSQL
+cloud "E-Mail Provider" as Mail
+cloud "Object Storage" as Obj
+node Scheduler
+Browser --> App : HTTPS
+App --> PostgreSQL
+App --> Mail
+App --> Obj
+Scheduler --> App
+@enduml
