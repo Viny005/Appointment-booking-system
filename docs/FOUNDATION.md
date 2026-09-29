@@ -22,7 +22,9 @@ Die erste Installation meldete vier hohe Audit-Einträge über transitive Pakete
 
 Unit-Tests: Sessiongrenzen, Kontostatus, abgelaufene/revozierte Session, Polling versus Aktivität, Health-Port, Auth-Konfiguration und gesperrte Routen. DB-Suite: PostgreSQL 17, echte Anmeldung, persistierte Session, Idle/Kontostatus, Logout, Registrierungsverbot und Health-Probe. CI prüft Migrationen und Seed-Wiederholung gegen getrennte Datenbanken.
 
-Der lokale Docker-Client ist vorhanden, der Linux-Daemon jedoch nicht erreichbar. Lokale DB-Tests werden nicht behauptet; CI verwendet einen echten PostgreSQL-Service. Abschließende Ergebnisse und CI-Status stehen in der PR-Beschreibung.
+Der lokale Docker-Client ist vorhanden, der Linux-Daemon jedoch nicht erreichbar. Lokale DB-Tests werden nicht behauptet. Der GitHub-Runner hat dagegen alle Schritte erfolgreich gegen PostgreSQL 17.11 ausgeführt: Migration, zweite Anwendung ohne Änderungen, DB-/Auth-Suite, Development-Seed und Wiederholung ohne Überschreiben.
+
+Nachweis vom 29.09.2026: GitHub Actions Lauf 36620295755, Commit 529a4c32257a9ea073b5702a44254988c691c08e, Ergebnis success. npm ci, Prisma Generate/Validate/Migrate, lint, typecheck, Unit-/Integrationstests, Seed und Build jeweils erfolgreich. Lokal ebenfalls npm install, lint (0 Fehler/Warnungen), typecheck, 15 Unit-Tests, Build, prisma validate und git diff --check bestanden; npm audit 0 Schwachstellen. Produktionsserver-Smoke: Startseite HTTP 200, ohne DB Health HTTP 503 mit ausschließlich status/unavailable und no-store. CI prüft den gesunden DB-Pfad mit HTTP 200. Kein Secret in den versionierten Dateien; .env und lokale Varianten sind ignoriert.
 
 Noch ausstehend: vollständige Auth-Verwaltung/Reset samt Sicherheitsgeneration, verteiltes Rate-Limit bei Skalierung, Nonce-CSP und produktive HSTS-Freigabe, Rechtstexte und fachliche Buchungsfunktionen. Basisheader sind vorhanden; keine Produktionsfreigabe. Mail-/Storage-Variablen sind reservierte lokale Konfiguration ohne Outbox, Versand oder Uploadadapter. Keine Kundenkonten oder E-Commerce-Funktionen.
 
