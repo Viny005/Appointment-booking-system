@@ -24,6 +24,10 @@
 
 Entwicklung verantwortet Kalender/Konkurrenz (R-01, R-02), Betreiber Versand und Scheduler (R-03, R-04), Produktverantwortung Meetingeignung und Scope (R-05, R-09), Betreiber/Datenschutz die Freigabe echter Texte (R-06), Betrieb Medien und Missbrauchsschutz (R-07, R-08). Review jeweils vor Implementierung des betroffenen Bausteins und erneut vor Go-Live. Noch keine technischen Schulden aus produktivem Code; dokumentierte Trade-offs sind Entwurfsrisiken.
 
-Zusätzliche Risiken: Mailduplikate bei unklarem Providerresultat, Tokenkopien in der Versandwarteschlange und Grenzen manueller Kalenderimporte. Gegenmaßnahmen und verbleibende Grenzen stehen in [A08](A08-cross-cutting-concepts.md). Neue Bibliotheksversionen und Sessionadapter müssen vor Implementation auf Kompatibilität geprüft werden.
+Zusätzliche Risiken: Mailduplikate bei unklarem Providerresultat, Tokenkopien in der Versandwarteschlange und Grenzen manueller Kalenderimporte. Gegenmaßnahmen und verbleibende Grenzen stehen in [A08](A08-cross-cutting-concepts.md). Die dokumentierte Bibliothekskombination ist gewählt; spätere Versionswechsel benötigen erneute Kompatibilitäts- und Sicherheitstests.
 
 Definitionslinks: [R-01](A11-risks-and-technical-debts.md#r-01), [R-02](A11-risks-and-technical-debts.md#r-02), [R-03](A11-risks-and-technical-debts.md#r-03), [R-04](A11-risks-and-technical-debts.md#r-04), [R-05](A11-risks-and-technical-debts.md#r-05), [R-06](A11-risks-and-technical-debts.md#r-06), [R-07](A11-risks-and-technical-debts.md#r-07), [R-08](A11-risks-and-technical-debts.md#r-08), [R-09](A11-risks-and-technical-debts.md#r-09).
+
+## Review-Ergebnis vor Implementierung
+
+Die Entscheidung für Bibliothek und unterstützte Kombination steht in [ADR-011](../../adr/011-authentication-library.md); noch auszuführende Integrationstests sind Entwicklungsarbeit, kein unentschiedener Architekturpunkt. Upload, Capability-Leaks, falsche Empfängermengen und Reminderduplikate sind in A08/A10 mit Gegenmaßnahmen und Abnahmen konkretisiert. Produktionsprovider und rechtliche Betreiberfreigabe bleiben ausschließlich [Go-live blockers](../OPEN-QUESTIONS.md).

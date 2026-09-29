@@ -25,3 +25,7 @@ Technische Nachbarsysteme müssen HTTPS, sichere Secret-Verwaltung, Backups und 
 ## S1.5 Keine Zahlungsanbieter
 
 Stripe, PayPal oder andere Payment-Systeme sind ausdrücklich **keine** Nachbarsysteme dieses Projekts.
+
+## Empfänger- und Datenverträge
+
+Die [Ereignismatrix](N2-querschnittskonzepte.md#n211-aenderungen-und-empfaenger) ist verbindlich. Nur der entfernte Gast erhält für seine Einladung CANCEL; andere Beteiligte erhalten REQUEST mit unveränderter Terminidentität. Resend verwendet aktuelle Daten mit gleicher Sequenz. Art.-14-Information nennt die tatsächliche Quelle. V1 hat keine direkte Kalenderkonto-Synchronisation und keine automatische Teams-Erstellung. Entwicklungs- und Produktionsadapter erfüllen denselben [Vertrag](../arch/A05-building-block-view.md).

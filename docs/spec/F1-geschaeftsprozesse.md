@@ -6,7 +6,7 @@
 2. System zeigt alle aktiven, buchbaren Profile.
 3. Kunde wählt ein Profil.
 4. System zeigt die aktiven Services dieses Profils.
-5. Kunde wählt einen Service.
+5. Kunde wählt einen Service und genau einen angebotenen konkreten Meetingmodus. FIXED zeigt die einzige Option; CLIENT_CHOICE lässt aus allowedMeetingModes wählen. Ort, Anrufrichtung oder manueller Onlinelink werden in der Zusammenfassung verständlich dargestellt.
 6. System zeigt konfigurierte zusätzliche Teilnehmer. Ein als Standard markierter Teilnehmer ist vorausgewählt und kann entfernt werden, sofern `removable=true`.
 7. System berechnet buchbare Tage für die tatsächliche Teilnehmermenge.
 8. Kunde wählt einen aktiven Tag.
@@ -42,20 +42,21 @@
 
 ## F1.4 Termin intern verwalten
 
-- Berater verwaltet eigene Termine.
+- Aktiver Berater öffnet Details ausschließlich der Termine, an denen sein eigenes Profil tatsächlich beteiligt ist. Eine Profilrelation gibt kein Recht.
 - Administrator verwaltet alle Termine.
 - Interne Nutzer können auch innerhalb der letzten 24 Stunden ändern/stornieren.
-- Relevante Änderungen erzeugen Audit-Einträge und Benachrichtigungen.
+- Detail enthält Kunde, Telefon, E-Mail, Gäste, Service, tatsächliche Berater, Wünsche, konkreten Modus, Ort/URL und Status. Interne Nutzer ändern erlaubte Kontaktdaten/Meetingangaben und Gäste, senden Bestätigungen erneut und erfassen nach Ende COMPLETED/NO_SHOW.
+- Die [Ereignismatrix](N2-querschnittskonzepte.md#n211-aenderungen-und-empfaenger) legt Audit, Empfänger und Kalendersequenz fest. Resend ohne Kalenderänderung behält die Sequenz. Entfernter Gast erhält nur seinen Cancel; andere Beteiligte behalten ihr Ereignis.
 
 ## F1.5 Profil und Services verwalten
 
 - Administrator legt Profile an, ändert sie, deaktiviert sie und ordnet Services zu.
-- Jeder aktive öffentliche Berater braucht mindestens einen aktiven Service.
+- Profil beginnt in DRAFT, kann ohne Konto bestehen und wird erst mit vollständigen Publikationsdaten und aktivem gültigen Service ACTIVE. INACTIVE stoppt Neubuchungen ohne bestehende Termine zu verändern. Konto-Deaktivierung beendet Zugriff, nicht Profilhistorie.
 - Services gehören zu einem Profil.
 - Der Administrator kann später pro Berater die Berechtigung aktivieren, eigene Services selbst zu verwalten.
 
 ## F1.6 Erinnerung und Anonymisierung
 
-- Das System versendet standardmäßig eine Terminerinnerung 24 Stunden vor Beginn, sofern der Termin weiterhin bestätigt ist.
+- Standardreminder ist 24 Stunden vor Beginn. Bei Anlage/Umbuchung nur planen, wenn reminderAt strikt nach dem in der Transaktion erfassten now liegt; sonst genügt die Bestätigung. Genau now+24h ist buchbar, ohne zweite Sofortmail. Geplante Reminder werden nur bei weiterhin bestätigtem Termin vor Beginn gesendet.
 - Abgeschlossene Termine bleiben als Historie erhalten.
 - Personenbezogene Daten werden nach definierter Frist automatisiert anonymisiert; fachliche Terminmetadaten bleiben erhalten.

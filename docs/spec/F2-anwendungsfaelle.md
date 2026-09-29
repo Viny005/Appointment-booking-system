@@ -24,6 +24,11 @@
 | [UC-18](#uc-18) | Benutzer/Rollen/Berechtigungen verwalten | Admin |
 | [UC-19](#uc-19) | Systemparameter verwalten | Admin |
 | [UC-20](#uc-20) | Passwort zurücksetzen | Admin/Berater |
+| [UC-21](#uc-21) | Internes Termindetail öffnen | Admin/tatsächlich beteiligter Berater |
+| [UC-22](#uc-22) | Erlaubte Termininformationen bearbeiten | Admin/tatsächlich beteiligter Berater |
+| [UC-23](#uc-23) | Gästeliste verwalten | Admin/tatsächlich beteiligter Berater |
+| [UC-24](#uc-24) | Bestätigung manuell erneut senden | Admin/tatsächlich beteiligter Berater |
+| [UC-25](#uc-25) | Terminergebnis erfassen | Admin/tatsächlich beteiligter Berater |
 
 <a id="uc-01"></a>
 ## UC-01 — Beraterprofil auswählen
@@ -37,7 +42,7 @@
 
 **Vorbedingung:** UC-01 abgeschlossen.\
 **Hauptablauf:** System zeigt ausschließlich aktive Services des gewählten Profils mit Name, Beschreibung, Dauer und Meetingmodus. Kunde wählt einen Service.\
-**Nachbedingung:** Service und Servicedauer sind gesetzt.
+**Nachbedingung:** Service, Dauer und genau ein konkreter Modus sind gesetzt. FIXED erlaubt genau eine, CLIENT_CHOICE nur konfigurierte Optionen; mode CLIENT_CHOICE als Terminwert wird abgewiesen. Erforderliche Orts-/Telefon-/Onlineangaben folgen [D2](D2-datentypen.md).
 
 <a id="uc-03"></a>
 ## UC-03 — Zusätzliche Teilnehmer konfigurieren
@@ -68,12 +73,12 @@
 **Vorbedingung:** Vollständiger Entwurf.\
 **Hauptablauf:** System zeigt Zusammenfassung. Nach Bestätigung wird die Verfügbarkeit serverseitig erneut geprüft und der Termin atomar gespeichert.\
 **Alternativ:** Slot ist inzwischen belegt → keine Buchung; Kunde erhält aktualisierte Verfügbarkeiten.\
-**Nachbedingung:** Terminstatus `CONFIRMED`, Kalender-UID erzeugt, Verwaltungslink erzeugt, Benachrichtigungen geplant.
+**Nachbedingung:** Terminstatus `CONFIRMED`, konkreter Meeting-Snapshot, Kalender-UID/Sequenz 0 und Verwaltungsfähigkeit erzeugt, Bestätigungen atomar geplant. Reminder nur bei reminderAt > now; bei genau 24 Stunden Vorlauf genügt die Bestätigung.
 
 <a id="uc-07"></a>
 ## UC-07 — Kalenderdatei hinzufügen
 
-Nach Bestätigung bietet das System eine `.ics`-Datei an. Dieselbe Terminidentität wird in E-Mails verwendet. Änderungen erhöhen die Kalendersequenz; Stornierungen verwenden dieselbe UID als Cancel-Update.
+Nach Bestätigung bietet das System eine `.ics`-Datei an. Dieselbe Terminidentität wird in E-Mails verwendet. Nur kalenderrelevante Änderungen nach N2 erhöhen die Kalendersequenz; Stornierungen verwenden dieselbe UID als Cancel-Update.
 
 <a id="uc-08"></a>
 ## UC-08 — Eigenen Termin verwalten
@@ -110,17 +115,17 @@ Berater sieht ausschließlich Termine, an denen das eigene Profil tatsächlich b
 <a id="uc-14"></a>
 ## UC-14 — Termin intern ändern/stornieren
 
-Berater darf eigene Termine verwalten; Admin alle. Änderungen erzeugen Audit-Einträge und passende Benachrichtigungen.
+Aktiver ADVISOR benötigt tatsächliche Beteiligung seines eigenen Profils; ADMIN darf alle Termine verwalten. Zeit-/Modusänderung revalidiert alle Teilnehmer unter Sperre. Absage vor Ende bleibt auch bei nachträglich blockierter Verfügbarkeit möglich. Details, Gäste, Resend und Ergebnis sind in UC-21 bis UC-25 geregelt. Alle Mutationen prüfen erwartete Version und Rechte; Audit/Outbox committen atomar. Die Empfänger- und Sequenzregeln stehen in [N2](N2-querschnittskonzepte.md#n211-aenderungen-und-empfaenger).
 
 <a id="uc-15"></a>
 ## UC-15 — Profile verwalten
 
-Admin legt Profile mit Name, Foto, Rolle/Titel, Kurzbeschreibung, E-Mail und Aktivstatus an oder ändert sie. Deaktivierung löscht keine Termin-Historie.
+ADMIN legt Profile zunächst als DRAFT an, auch ohne Konto. Veröffentlichung verlangt Name, geprüftes Foto, Rolle/Titel, Kurzbeschreibung, Profil-E-Mail und mindestens einen aktiven vollständigen Service. ACTIVE/INACTIVE und Kontozuordnung folgen D1; keine historische Löschung. Fotoersatz nur ADMIN, validiert gemäß NFR-SEC-09.
 
 <a id="uc-16"></a>
 ## UC-16 — Services verwalten
 
-Admin erstellt, ändert, aktiviert/deaktiviert Services pro Profil. Ein öffentlich aktives Profil muss mindestens einen aktiven Service behalten. Eine spätere Berechtigung `canManageOwnServices` kann pro Berater aktiviert werden.
+Admin erstellt, ändert, aktiviert/deaktiviert Services pro Profil. Ein öffentlich aktives Profil muss mindestens einen aktiven Service behalten. Die explizite Berechtigung `canManageOwnServices` erlaubt nur eigene Services. Konfiguration prüft MeetingModePolicy und jeden angebotenen konkreten Modus samt Pflichtinformationen; historische Snapshots bleiben unverändert.
 
 <a id="uc-17"></a>
 ## UC-17 — Beziehungen zwischen Profilen verwalten
@@ -135,7 +140,7 @@ Admin verwaltet interne Konten und Rollen `ADMIN`, `ADVISOR`. Erweiterbare Berec
 <a id="uc-19"></a>
 ## UC-19 — Systemparameter verwalten
 
-Admin verwaltet u. a. Mindestvorlauf, Buchungshorizont, Slot-Schrittweite, Erinnerungszeitpunkt und Aufbewahrungs-/Anonymisierungsfristen.
+Admin verwaltet gültige Slot-Schrittweite und Aufbewahrungs-/Anonymisierungsfristen. Vorlauf 24 verstrichene Stunden, Horizont drei Kalendermonate, Reminder 24 Stunden und timeZone Europe/Berlin sind die feste V1-Baseline; ihre Änderung verlangt eine dokumentierte fachliche Folgeentscheidung, keinen freien V1-Parameterwechsel.
 
 <a id="uc-20"></a>
 ## UC-20 — Passwort zurücksetzen
@@ -153,3 +158,58 @@ Interner Nutzer fordert einen zeitlich begrenzten Einmallink an. Nach erfolgreic
 - Admin-Verwaltung schützt den letzten aktiven Administrator vor Deaktivierung/Rollenentzug. Ungültige Systemparameter speichern nichts; Änderungen betreffen künftige Berechnungen, keine stillen Terminänderungen.
 
 Für jeden Use Case sind Baustein und geplanter Abnahmenachweis in der [Matrix](../TRACEABILITY.md) aufgeführt. Diese Szenarien sind vor Implementierung nicht ausgeführte Tests.
+
+<a id="uc-21"></a>
+## UC-21 — Internes Termindetail öffnen
+
+**Vorbedingung:** Aktiver ADVISOR als tatsächlicher Teilnehmer oder ADMIN.
+
+**Ablauf:** Termin-ID anfordern; Server prüft Eigentum und liefert Kundenname, Telefon, E-Mail, Gäste, Service, Teilnehmer, Wünsche, Modus, Ort/URL und Status.
+
+**Alternativen:** Fremde/ungültige ID liefert keine Daten; personenbezogene Felder nach Retention leer markieren.
+
+**Nachbedingung:** Nur erlaubter Detailzugriff; keine Mutation.
+
+<a id="uc-22"></a>
+## UC-22 — Erlaubte Termininformationen bearbeiten
+
+**Vorbedingung:** Berechtigter interner Nutzer; CONFIRMED und now < end; erwartete Version.
+
+**Ablauf:** Erlaubte Namens-/Telefon-/Adress-/Wunsch- und Meetingfelder ändern. Service, Kunde-E-Mail, Dauer und Beratermenge bleiben fest. Alle Teilnehmerverfügbarkeiten, Feld-Allowlist und Modus werden erneut geprüft.
+
+**Alternativen:** Konflikt/verbotenes Feld: unveränderte Daten und keine Nachricht.
+
+**Nachbedingung:** Version +1, Sequenz nur bei Kalenderwirkung, Audit und Empfängerprojektion nach N2.
+
+<a id="uc-23"></a>
+## UC-23 — Gästeliste verwalten
+
+**Vorbedingung:** Berechtigter interner Nutzer; CONFIRMED vor Ende.
+
+**Ablauf:** Höchstens zehn eindeutige externe Adressen; Kundene-Mail und Berateradressen ausgeschlossen. Delta hinzufügen/beibehalten/entfernen berechnen und atomar speichern.
+
+**Alternativen:** Ungültige Adresse, Konflikt oder fehlendes Recht: nichts speichern.
+
+**Nachbedingung:** Neue Gäste erhalten REQUEST/Art14, verbleibende Beteiligte aktualisierten REQUEST, entfernte nur ihren CANCEL mit altem sicheren Snapshot. Nur +1 Sequenz, keine Absage an verbleibende Teilnehmer.
+
+<a id="uc-24"></a>
+## UC-24 — Bestätigung manuell erneut senden
+
+**Vorbedingung:** Berechtigter interner Nutzer; CONFIRMED vor Ende.
+
+**Ablauf:** Nichtleere Teilmenge aktueller Empfänger wählen, Standard Kunde; höchstens drei Befehle in zehn Minuten. Befehl-ID verhindert Doppelausführung. Bei Kunde Managementtoken rotieren.
+
+**Alternativen:** Freie fremde Adresse abweisen; Mailfehler bleibt retryfähig, Termin unverändert.
+
+**Nachbedingung:** Neues Versandereignis mit Audit; gleiche UID/calendarSequence, kein weiterer Reminder, kein Token an Gäste/Berater.
+
+<a id="uc-25"></a>
+## UC-25 — Terminergebnis erfassen
+
+**Vorbedingung:** Berechtigter interner Nutzer, CONFIRMED und now >= end.
+
+**Ablauf:** COMPLETED oder NO_SHOW setzen; vorhandene Reservationen atomar entfernen.
+
+**Alternativen:** Vor Ende oder anderer terminaler Status: abweisen. Identische Wiederholung bleibt No-op.
+
+**Nachbedingung:** Version/Audit aktualisiert; keine E-Mail, keine Sequenzänderung.

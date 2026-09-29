@@ -23,7 +23,7 @@ Das Appointment Booking System stellt eine zentrale, leicht bedienbare Weboberfl
 | **Kunde** | Öffentlicher Besucher. Benötigt kein Konto. Bucht und verwaltet ausschließlich den eigenen Termin über einen sicheren Link. |
 | **Berater** | Authentifizierter interner Nutzer. Sieht eigene Termine und pflegt eigene Verfügbarkeiten. |
 | **Administrator** | Authentifizierter interner Nutzer mit globalen Rechten. Verwaltet Profile, Services, Beziehungen, Rollen, Berechtigungen und Einstellungen. |
-| **Gast** | Zusätzliche E-Mail-Adresse, die ein Kunde optional zu einem konkreten Termin einlädt. Kein Benutzerkonto. |
+| **Gast** | Zusätzliche E-Mail-Adresse, die ein Kunde bei Buchung oder ein berechtigter interner Nutzer zu einem konkreten Termin einlädt. Kein Benutzerkonto. |
 | **E-Mail-Dienst** | Versendet Bestätigungen, Änderungen, Absagen und Erinnerungen. |
 | **Hosting-/Datenbankanbieter** | Technische Betriebsumgebung. |
 | **Microsoft Teams** | Zukünftiger optionaler Meeting-Provider; nicht für V1 erforderlich. |
@@ -41,7 +41,7 @@ Das Appointment Booking System stellt eine zentrale, leicht bedienbare Weboberfl
 - Mehrpersonen-Termine mit Schnittmenge der Verfügbarkeiten.
 - Konfigurierbare Profilbeziehungen, z. B. „Merveil + Fabrice“.
 - Standardmäßig vorausgewählter zusätzlicher Teilnehmer, der vom Kunden entfernt werden kann, sofern die Beziehung dies erlaubt.
-- Buchungsfenster: frühestens 24 Stunden vor Beginn, höchstens 3 Monate im Voraus.
+- Buchungsfenster: mindestens 24 Stunden Vorlauf, höchstens 3 Monate im Voraus.
 - Keine Pause zwischen aufeinanderfolgenden Terminen.
 - Kundendaten und optionale Gäste.
 - Bestätigung, Änderung und Stornierung ohne Kundenkonto über sicheren Link.

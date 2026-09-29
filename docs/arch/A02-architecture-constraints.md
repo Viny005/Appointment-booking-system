@@ -5,14 +5,14 @@
 - **Next.js mit App Router** als Full-Stack-Webanwendung.
 - **TypeScript** für Frontend und Serverlogik.
 - **React** für UI.
-- **Tailwind CSS** oder vergleichbares tokenbasiertes Styling.
+- **Tailwind CSS** mit Design-Tokens.
 - **PostgreSQL** als relationale Datenbank.
 - **Prisma** für typisierte Datenzugriffe und Migrationen; DB-spezifische Constraints dürfen über SQL-Migrationen ergänzt werden.
-- **Auth.js** bzw. gleichwertiges serverseitiges Session-Modul mit Datenbanksitzungen.
+- **Better Auth 1.7.6** mit Prisma-Adapter und Datenbanksitzungen gemäß [ADR-011](../../adr/011-authentication-library.md).
 - **Docker Compose** für reproduzierbare lokale Entwicklung.
 - E-Mail und Dateispeicher über eigene Adapter.
 
-Versionen werden nicht als dauerhafte Architekturconstraint festgeschrieben; Lockfiles definieren die jeweilige Implementierungsversion.
+Entwicklungsbaseline: Next.js 16.3.7, React/ReactDOM 19.3.0, TypeScript 5.9.3, Prisma/Client/pg-Adapter 7.10.0, Node.js 24 LTS, PostgreSQL 17.11. Deklarierte Kompatibilität und Quellen stehen in ADR-011; Lockfile und konkrete Node-Patchversion werden beim ersten Implementierungscommit fixiert. Kein ungeprüfter Majorwechsel. Styling verwendet Tailwind CSS mit Design-Tokens; keine Auswahlfrage mehr.
 
 ## 2.2 Fachlich bedingte Constraints
 

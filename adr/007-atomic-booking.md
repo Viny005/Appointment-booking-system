@@ -1,7 +1,7 @@
 <a id="adr-007"></a>
 # ADR-007 — Atomare Buchung und Kollisionsschutz
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext

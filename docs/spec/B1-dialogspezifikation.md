@@ -125,3 +125,13 @@ Bereiche:
 - Audit/Fehlerübersicht
 
 Admin kann alle Kalender und Verfügbarkeiten verwalten. Berater verwalten initial eigene Verfügbarkeit und eigene Termine; eigene Serviceverwaltung ist nur bei expliziter Berechtigung freigeschaltet.
+
+## Ergänzende V1-Dialogverträge
+
+- Service zeigt FIXED als einzige Option oder CLIENT_CHOICE als Auswahl aus allowedMeetingModes. Zusammenfassung speichert/zeigt immer IN_PERSON, PHONE oder ONLINE mit Ort, Anrufrichtung/Ziel beziehungsweise Link; niemals CLIENT_CHOICE als Terminmodus.
+- Bei Herbstwechsel beide 02:30 mit MESZ/MEZ und UTC-Offset kennzeichnen; Spring-Lücke deaktivieren. Alle Oberflächen verwenden Systemzone Europe/Berlin.
+- Hinweis nach Art. 13 bereits vor Übermittlung an den serverseitigen Entwurf; Adresse freiwillig, Telefonzweck erklären, Freitextwarnung gegen unnötige sensible Angaben. Keine Pflichtcheckbox zum Akzeptieren der Datenschutzerklärung.
+- Interner Detaildialog zeigt Kundenname, Telefon, E-Mail, Gäste, Service, tatsächliche Teilnehmer, Wünsche, Modus, Ort/URL und Status. Aktionen: Zeit/erlaubte Details bearbeiten, Gäste verwalten, absagen, Bestätigung erneut senden; nach Ende Ergebnis COMPLETED/NO_SHOW. Sichtbarkeit ersetzt nie Serverautorisierung.
+- Gästeentfernung zeigt ausdrücklich „Nur diese Einladung wird abgesagt“. Verbleibende Beteiligte erhalten keinen Cancel. Resend-Auswahl zeigt nur aktuelle Empfänger, Standard Kunde, keine freie Adresse; erklärt Rotation des Kundenlinks und unveränderte Kalenderdaten.
+- Terminale/anonymisierte Termine nur lesend, leere PII als gelöscht markieren. Versionskonflikt zeigt Neuladen statt stiller Überschreibung. Profilverwaltung trennt DRAFT/ACTIVE/INACTIVE von aktivem/deaktiviertem Konto und zeigt fehlende Publikationsdaten.
+- Foto-Upload nur ADMIN, JPEG/PNG/WebP bis 5 MiB und 4096 Pixel pro Seite. Serverfehler erhält das bisherige Bild. Tastatur, Feldlabels und WCAG 2.2 AA bleiben verpflichtend.

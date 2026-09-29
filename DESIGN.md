@@ -25,8 +25,10 @@
 - Semantisches HTML, sichtbare Fokuszustände, Tastaturbedienung.
 - Formulare mit Labels, Fehlermeldungen und verständlichen Hilfetexten.
 - Information darf nicht ausschließlich über Farbe vermittelt werden.
-- Zielniveau: WCAG 2.2 AA für die zentralen Flows; Abweichungen erfordern dokumentierte Abnahme und Begründung.
+- Verbindliches Projektziel: WCAG 2.2 AA, unabhängig von der rechtlichen BFSG-Anwendbarkeit; keine stillschweigende Abschwächung.
 
 ## Branding
 
 Logo, finale Farben und Typografie sind noch nicht festgelegt. Die technische Implementierung soll Design-Tokens verwenden, damit Branding später ohne strukturelle Änderungen angepasst werden kann.
+
+Interne Termine zeigen konkrete Meetinginformationen und eindeutige Statusaktionen; „Einladung entfernen“ unterscheidet sich sichtbar von „Termin absagen“. Wiederholte lokale Uhrzeiten erhalten verständliche Zeitzonen-/Offsetlabels. Profilveröffentlichung und Kontozugriff werden getrennt dargestellt.

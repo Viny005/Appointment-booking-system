@@ -1,7 +1,7 @@
 <a id="adr-002"></a>
 # ADR-002 — PostgreSQL und Prisma
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext

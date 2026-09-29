@@ -1,7 +1,7 @@
 <a id="adr-004"></a>
 # ADR-004 — Datenbanksitzungen und RBAC
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext
@@ -12,7 +12,7 @@ Anforderungstreiber: CON-18, NFR-SEC-01, NFR-SEC-04. Auflösbare Definitionen im
 
 ## Entscheidung
 
-DB-Sessions, ADMIN/ADVISOR, zusätzliche Permissions und Ressourcenbesitzprüfung im Application Layer. Passwortreset widerruft Sessions. Bibliothekswahl nach Kompatibilitätsnachweis.
+DB-Sessions, ADMIN/ADVISOR, zusätzliche Permissions und Ressourcenbesitzprüfung im Application Layer. Passwortreset widerruft Sessions. Konkrete Bibliothek, unterstützte Kombination und Policy-Verantwortung sind in [ADR-011](011-authentication-library.md) entschieden.
 
 ## Betrachtete Alternativen
 

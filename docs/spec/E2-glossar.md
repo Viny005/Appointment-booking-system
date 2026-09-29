@@ -16,3 +16,10 @@
 | Verwaltungslink | Sicherer Link, mit dem ein Kunde ohne Konto seinen Termin verwaltet. |
 | Anonymisierung | Entfernung personenbezogener Daten unter Erhalt fachlicher Historienmetadaten. |
 | Profilbeziehung | Konfiguration zwischen zwei Beraterprofilen, z. B. Merveil → Fabrice. |
+
+| Ergänzender Begriff | Bedeutung |
+|---|---|
+| MeetingModePolicy | FIXED oder CLIENT_CHOICE als Service-Auswahlregel |
+| MeetingMode | Tatsächliche Terminform IN_PERSON, PHONE oder ONLINE |
+| Profilstatus | DRAFT, ACTIVE oder INACTIVE, unabhängig vom Benutzerkonto |
+| Resend | Bewusst neuer Bestätigungsversand, keine neue Buchung oder Kalendersequenz |

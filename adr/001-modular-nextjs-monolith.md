@@ -1,7 +1,7 @@
 <a id="adr-001"></a>
 # ADR-001 — Modularer Next.js-Full-Stack-Monolith
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext

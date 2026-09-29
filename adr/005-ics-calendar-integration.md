@@ -1,7 +1,7 @@
 <a id="adr-005"></a>
 # ADR-005 — iCalendar als V1-Kalenderintegration
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext

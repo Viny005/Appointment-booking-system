@@ -19,10 +19,21 @@
 | <a id="af-15"></a>AF-15 | Termin stornieren | Status ändern, Ressourcen freigeben, Kalender-Cancel erzeugen. |
 | <a id="af-16"></a>AF-16 | `.ics` erzeugen | REQUEST bei Anlage/Änderung, CANCEL bei Stornierung mit stabiler UID. |
 | <a id="af-17"></a>AF-17 | E-Mail planen/versenden | Beteiligte und Gäste; keine unbeteiligten Profile. |
-| <a id="af-18"></a>AF-18 | Erinnerung planen | Standard 24 h vor Termin. |
+| <a id="af-18"></a>AF-18 | Erinnerung planen | Standard 24 h vor Termin; bei Anlage/Umbuchung nur wenn reminderAt > now, sonst kein Sofortreminder. |
 | <a id="af-19"></a>AF-19 | Interne Sitzung verwalten | Login, Idle-Timeout, Absolute-Timeout, Logout. |
 | <a id="af-20"></a>AF-20 | Rollen/Berechtigungen prüfen | Serverseitige Autorisierung je Operation. |
 | <a id="af-21"></a>AF-21 | Passwortreset verwalten | Einmalige, ablaufende Token. |
 | <a id="af-22"></a>AF-22 | personenbezogene Daten anonymisieren | Nach Aufbewahrungsregel, Historie bleibt fachlich erhalten. |
 | <a id="af-23"></a>AF-23 | Audit-Log schreiben | Relevante interne Änderungen protokollieren. |
-| <a id="af-24"></a>AF-24 | Meetinginformationen auflösen | Präsenz/Telefon/Online/ClientChoice; V1 manuell, später Provider. |
+| <a id="af-24"></a>AF-24 | Meetinginformationen auflösen | Servicepolitik FIXED/CLIENT_CHOICE auf konkretes IN_PERSON/PHONE/ONLINE mit validierten Angaben auflösen; V1 manuell. |
+
+| ID | Ergänzte Funktion | Vertrag |
+|---|---|---|
+| <a id="af-25"></a>AF-25 | Internes Detail lesen | Eigentumsprüfung, autorisierte Kunden-/Terminprojektion. |
+| <a id="af-26"></a>AF-26 | Termindetails ändern | Feld-Allowlist, Version, Revalidierung, Audit und kalenderabhängige Sequenz/Empfänger. |
+| <a id="af-27"></a>AF-27 | Gäste ändern | Empfängerdelta und nur für entfernte Einladung CANCEL; übrige Ereignisse bleiben bestehen. |
+| <a id="af-28"></a>AF-28 | Bestätigung erneut senden | Eigener idempotenter Versandbefehl; unveränderte Kalendersequenz; Kundenfähigkeit ggf. rotieren. |
+| <a id="af-29"></a>AF-29 | Terminergebnis erfassen | Nach Ende COMPLETED/NO_SHOW, keine Mail/Sequenzänderung. |
+| <a id="af-30"></a>AF-30 | Meetingkonfiguration prüfen | Nichtleere allowedMeetingModes, FIXED genau einer, konkreter Terminmodus und Pflichtangaben. |
+| <a id="af-31"></a>AF-31 | Profil-/Kontolebenszyklus prüfen | DRAFT/ACTIVE/INACTIVE, optionales Konto, Publikationspflichtfelder und Schutz letzter ADMIN. |
+| <a id="af-32"></a>AF-32 | Profilfoto sicher ersetzen | Nur ADMIN; Dateityp/Größe/Dimensionen prüfen, neu enkodieren, servergenerierter Name, altes Objekt sicher entfernen. |

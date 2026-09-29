@@ -1,7 +1,7 @@
 <a id="adr-003"></a>
 # ADR-003 — Zentrale Availability Engine
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext

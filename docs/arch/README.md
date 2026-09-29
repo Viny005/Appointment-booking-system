@@ -21,4 +21,4 @@ Die Architektur ist bewusst als modularer Full-Stack-Monolith vorgesehen: eine A
 
 [Rückverfolgbarkeit](../TRACEABILITY.md) · [ADR-Index](../../adr/README.md) · [Quellen](../SOURCES.md) · [Offene Entscheidungen](../OPEN-QUESTIONS.md).
 
-Alle zwölf Kapitel bilden ein Sollbild vor Implementierung; Betriebsziele und Präzisierungen benötigen Review. Die Spezifikation ist die Quelle fachlicher Anforderungen.
+Alle zwölf Kapitel bilden das entschiedene Sollbild vor Implementierung. Die PR bleibt zur abschließenden Review offen; reale Produktionsfreigaben sind davon getrennt. Die Spezifikation ist die Quelle fachlicher Anforderungen. [Implementierungsbereitschaft](../READY-FOR-IMPLEMENTATION.md).

@@ -1,7 +1,7 @@
 <a id="adr-008"></a>
 # ADR-008 — Historie und begrenzte PII-Aufbewahrung
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext
@@ -29,3 +29,5 @@ Konkretisierung: [Architektur](../docs/arch/A07-deployment-view.md). Geplante Na
 [ADR-Index](README.md)
 
 Definitionslinks: [AF-22](../docs/spec/F3-anwendungsfunktionen.md#af-22), [CON-19](../docs/spec/P1-constraints.md#con-19), [NFR-PRIV-03](../docs/spec/N1-nichtfunktional.md#nfr-priv-03).
+
+Die Architekturentscheidung zur konfigurierbaren Bereinigung ist Accepted. Die rechtliche Freigabe der konkreten Produktionsfristen 12/6 Monate ist davon getrennt und bleibt ein [Go-live blocker](../docs/OPEN-QUESTIONS.md). Entwicklung und Tests verwenden diese expliziten Standardwerte.

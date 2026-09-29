@@ -1,7 +1,7 @@
 <a id="adr-006"></a>
 # ADR-006 — Transaktionale E-Mail-Outbox
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext

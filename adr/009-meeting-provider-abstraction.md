@@ -1,7 +1,7 @@
 <a id="adr-009"></a>
 # ADR-009 — MeetingProvider-Abstraktion
 
-**Status:** Accepted (dokumentarische Baseline aus dem Archiv; zur Review)\
+**Status:** Accepted\
 **Datum:** 2026-09-29
 
 ## Kontext
@@ -12,7 +12,7 @@ Anforderungstreiber: CON-17, AF-24. Auflösbare Definitionen im [ID-Register](..
 
 ## Entscheidung
 
-Providerneutrale Meetinginformationen. V1 nutzt manuell/administrativ konfigurierten Online-Link, Präsenzort oder Telefon; CLIENT_CHOICE wird vor Buchung konkretisiert.
+Providerneutrale Meetinginformationen. Service konfiguriert `meetingModePolicy` (FIXED/CLIENT_CHOICE) und eine nicht leere Menge `allowedMeetingModes`; FIXED erlaubt genau einen Modus. Appointment speichert ausschließlich IN_PERSON, PHONE oder ONLINE mit eigenem validierten Snapshot. V1 nutzt einen konfigurierten HTTPS-Link (provider MANUAL), Präsenzort oder Telefon. Im Standard ruft der Berater die Pflichtnummer des Kunden an. Die vollständigen Varianten und Adapterverträge stehen in A05 und D2.
 
 ## Betrachtete Alternativen
 
