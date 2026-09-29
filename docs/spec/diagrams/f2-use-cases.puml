@@ -1,0 +1,44 @@
+@startuml
+left to right direction
+actor Kunde
+actor Berater
+actor Administrator
+rectangle System {
+  usecase "Profil wählen" as UC1
+  usecase "Service wählen" as UC2
+  usecase "Teilnehmer wählen" as UC3
+  usecase "Datum/Uhrzeit wählen" as UC4
+  usecase "Termin bestätigen" as UC6
+  usecase "Termin verwalten" as UC8
+  usecase "Verfügbarkeit pflegen" as UC12
+  usecase "Profile/Services/Beziehungen verwalten" as UCA
+  usecase "UC-21 Internes Termindetail" as UC21
+  usecase "UC-22 Erlaubte Details bearbeiten" as UC22
+  usecase "UC-23 Gäste verwalten" as UC23
+  usecase "UC-24 Bestätigung erneut senden" as UC24
+  usecase "UC-25 Ergebnis erfassen" as UC25
+}
+Kunde --> UC1
+Kunde --> UC2
+Kunde --> UC3
+Kunde --> UC4
+Kunde --> UC6
+Kunde --> UC8
+Berater --> UC12
+Administrator --> UCA
+Berater --> UC21
+Berater --> UC22
+Berater --> UC23
+Berater --> UC24
+Berater --> UC25
+Administrator --> UC21
+Administrator --> UC22
+Administrator --> UC23
+Administrator --> UC24
+Administrator --> UC25
+note right of UC21
+  ADMIN: alle Termine
+  ADVISOR: nur tatsächliche Beteiligung
+  Rechte serverseitig für jede Operation prüfen
+end note
+@enduml

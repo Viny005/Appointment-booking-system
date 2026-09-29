@@ -1,0 +1,15 @@
+@startuml
+actor Kunde
+actor Berater
+actor Administrator
+rectangle "Appointment Booking System" as ABS
+cloud "E-Mail Provider" as Mail
+cloud "Kalender-App (.ics)" as Cal
+cloud "Microsoft Graph (V2)" as Graph
+Kunde --> ABS
+Berater --> ABS
+Administrator --> ABS
+ABS --> Mail
+ABS --> Cal
+ABS ..> Graph
+@enduml
