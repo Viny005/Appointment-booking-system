@@ -4,6 +4,7 @@
 Only the Python standard library is needed. --external enables network checks.
 """
 import argparse
+import os
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -39,7 +40,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--external', action='store_true')
     args = parser.parse_args()
-    files = sorted(p for p in ROOT.rglob('*.md') if '.git' not in p.parts)
+    files = []
+    for directory, folders, names in os.walk(ROOT):
+        folders[:] = [name for name in folders if name not in {'.git', 'node_modules', '.next', 'generated', 'coverage'}]
+        files.extend(Path(directory) / name for name in names if name.endswith('.md'))
+    files.sort()
     texts = {p: outside_fences(p.read_text(encoding='utf-8-sig')) for p in files}
     errors, definitions, all_ids, external = [], {}, set(), set()
     reference_files = {}
