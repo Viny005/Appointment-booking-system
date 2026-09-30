@@ -1,13 +1,14 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { AvailabilityManagement, PublicAvailability } from "@/modules/availability/application/availability";
+import { appointmentOccupancy } from "@/modules/appointments/infrastructure/prisma-appointments";
 import type { OccupancyReader } from "@/modules/availability/application/ports";
 import { prismaAvailability } from "@/modules/availability/infrastructure/prisma-availability";
 import { getDatabase } from "@/shared/infrastructure/database";
 import { getInternalSession } from "./internal-session";
 
-// Deliberately no default empty occupancy adapter: future booking integration must supply it.
-export function publicAvailability(occupancy: OccupancyReader) {
+// Production reads confirmed appointments; no empty default occupancy.
+export function publicAvailability(occupancy: OccupancyReader = appointmentOccupancy(getDatabase())) {
   return new PublicAvailability(prismaAvailability(getDatabase()), occupancy, Date.now);
 }
 export async function internalAvailability(headers: Headers) {

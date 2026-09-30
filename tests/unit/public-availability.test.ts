@@ -20,7 +20,7 @@ describe("UC-04 public availability projections", () => {
   });
   it("reads only actual participants and changes intersection when explicitly added", async () => {
     const { api, occupancy } = setup();
-    const result = await api.getBookableSlots({ ...selection, participantIds: ["a", "b", "a"] }, "2026-10-05");
+    const result = await api.getBookableSlots({ ...selection, participantIds: ["a", "b"] }, "2026-10-05");
     expect(result.ok && result.value.map(s => s.localTime)).toEqual(["11:00"]);
     expect(occupancy.read.mock.calls[0][0]).toEqual(["a", "b"]);
   });
@@ -35,6 +35,7 @@ describe("UC-04 public availability projections", () => {
     const { api } = setup();
     expect(await api.getBookableDays(selection, "2026-10-06", "2026-10-05")).toMatchObject({ ok: false });
     expect(await api.getBookableDays(selection, "2026-01-01", "2027-01-01")).toMatchObject({ ok: false });
+    expect(await api.getBookableSlots({ ...selection, participantIds: ["a", "a"] }, "2026-10-05")).toMatchObject({ ok: false });
     expect(await api.getBookableSlots({ ...selection, participantIds: ["b"] }, "2026-10-05")).toMatchObject({ ok: false });
   });
 });

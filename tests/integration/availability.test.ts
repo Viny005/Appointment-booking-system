@@ -127,6 +127,7 @@ describe("UC-12 transactional availability administration", () => {
   });
   it("public reads use persisted schedules, actual participants and occupancy only", async () => {
     const a = await profile(), b = await profile();
+    await db.profileRelation.create({ data: { id: randomUUID(), sourceProfileId: a, targetProfileId: b } });
     value(await api.setWeeklyDay(admin, a, 0, 1, [r("08:00", "12:00")])); value(await api.setWeeklyDay(admin, b, 0, 1, [r("10:00", "14:00")]));
     const service = await db.service.findFirstOrThrow({ where: { advisorProfileId: a } });
     const publicApi = new PublicAvailability(repository, { read: async () => [{ start: instant("2026-10-05T08:00:00Z"), end: instant("2026-10-05T09:00:00Z") }] }, () => instant("2026-10-01T00:00:00Z"));

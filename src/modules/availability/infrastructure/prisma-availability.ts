@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import { assertPublishable, isValidActiveService } from "@/modules/profiles/domain/policies";
+import { loadBookingSelection } from "@/modules/profiles/infrastructure/booking-selection";
+import { CatalogError } from "@/modules/profiles/domain/errors";
 import { AvailabilityError, localDate } from "../domain/values";
 import type { AvailabilityReader, AvailabilityRepository, AvailabilityWriter } from "../application/ports";
 
 const date = (value: string) => new Date(value + "T00:00:00.000Z"); // SQL DATE transport, not a Berlin instant
-function reader(tx: Prisma.TransactionClient): AvailabilityReader {
+export function prismaAvailabilityReader(tx: Prisma.TransactionClient): AvailabilityReader {
   return {
     async actor(id) {
       const user = await tx.user.findUnique({ where: { id }, select: { active: true, role: true, advisorProfile: { select: { id: true } } } });
@@ -23,19 +24,13 @@ function reader(tx: Prisma.TransactionClient): AvailabilityReader {
       }]));
     },
     async publicSelection(profileIds, primaryProfileId, serviceId) {
-      const profiles = await tx.advisorProfile.findMany({ where: { id: { in: profileIds } }, include: { services: true } });
-      if (profiles.length !== profileIds.length) return null;
-      for (const profile of profiles) {
-        if (profile.status !== "ACTIVE") return null;
-        try { assertPublishable({ profile, services: profile.services }); } catch { return null; }
-      }
-      const service = profiles.find(p => p.id === primaryProfileId)?.services.find(s => s.id === serviceId);
-      return service && isValidActiveService(service) ? service.durationMinutes : null;
+      try { return (await loadBookingSelection(tx, profileIds, primaryProfileId, serviceId)).service.durationMinutes; }
+      catch (error) { if (error instanceof CatalogError) return null; throw error; }
     },
   };
 }
 function writer(tx: Prisma.TransactionClient): AvailabilityWriter {
-  return { ...reader(tx),
+  return { ...prismaAvailabilityReader(tx),
     async replaceWeekly(profileId, weekday, ranges, version) {
       // Weekly intervals are a versioned day-set, not historical business entities.
       await tx.weeklyAvailability.deleteMany({ where: { advisorProfileId: profileId, weekday } });
@@ -62,7 +57,7 @@ async function translate<T>(work: () => Promise<T>): Promise<T> {
 }
 export function prismaAvailability(db: PrismaClient): AvailabilityRepository {
   return {
-    read: work => translate(() => db.$transaction(tx => work(reader(tx)), { isolationLevel: "RepeatableRead", timeout: 20000 })),
+    read: work => translate(() => db.$transaction(tx => work(prismaAvailabilityReader(tx)), { isolationLevel: "RepeatableRead", timeout: 20000 })),
     write: (actorId, profileId, work) => translate(() => db.$transaction(async tx => {
       // Same order as the profile catalog: User, AdvisorProfile, then child rows.
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${actorId} FOR UPDATE`;
