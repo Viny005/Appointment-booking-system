@@ -80,7 +80,7 @@ Interne Reads prüfen den aktuellen aktiven Actor: ADMIN oder ADVISOR mit tatsä
 
 
 
-39 neue Unit-Tests; 32 neue PostgreSQL-Tests. Integration deckt parallele Einzel-/Mehrberaterbuchung, umgekehrte Teilnehmerreihenfolge, angrenzende Termine, Rollback nach Insert, veraltete Slots, Aktivierungsänderungen, Pflichtteilnehmer, Snapshot-Stabilität, direkte Constraint-Verletzungen und Zugriffsschutz ab. DST: beide Herbst-02:30-Instants bleiben separat buchbar; Frühjahr-02:30 wird nicht erzeugt; lokale Zeit ohne Offset wird nicht als UTC-Buchung akzeptiert.
+43 neue Unit-Tests; 32 neue PostgreSQL-Tests. Integration deckt parallele Einzel-/Mehrberaterbuchung, umgekehrte Teilnehmerreihenfolge, angrenzende Termine, Rollback nach Insert, veraltete Slots, Aktivierungsänderungen, Pflichtteilnehmer, Snapshot-Stabilität, direkte Constraint-Verletzungen und Zugriffsschutz ab. DST: beide Herbst-02:30-Instants bleiben separat buchbar; Frühjahr-02:30 wird nicht erzeugt; lokale Zeit ohne Offset wird nicht als UTC-Buchung akzeptiert.
 
 
 
@@ -91,4 +91,6 @@ Migrationen werden auf frischer Datenbank sowie als Upgrade von Foundation, Prof
 Noch nicht enthalten: BookingDraft, 24h-Idempotency, öffentlicher Confirm-Endpunkt, Outbox, E-Mail, ICS, Reminder, Kundenverwaltung, Umbuchung, Stornierungs-Use-Case, Admin-UI, Audit und Retention-Job. Deshalb ist UC-06 ausdrücklich nur teilweise umgesetzt. Keine vollständige Produktionsfreigabe und kein E-Commerce-Code. Kein fachlicher Spezifikationswiderspruch festgestellt.
 
 
-Lokale Abschlussvalidierung: npm ci, Prisma Generate/Validate, Lint, Typecheck, 181 Unit-Tests, 76 PostgreSQL-Tests, Production Build, npm audit (0 Schwachstellen), Dokumentationspruefung (56 Dateien, 1188 Links, 192 IDs, 0 Fehler), git diff --check erfolgreich. Frischinstallation und alle drei Upgrade-Pfade inklusive wiederholtem Deploy erfolgreich. CI-Nachweis folgt als PR-Check am finalen Commit.
+Lokale Abschlussvalidierung: npm ci, Prisma Generate/Validate, Lint, Typecheck, 185 Unit-Tests, 76 PostgreSQL-Tests, Production Build, npm audit (0 Schwachstellen), Dokumentationspruefung (56 Dateien, 1188 Links, 192 IDs, 0 Fehler), git diff --check erfolgreich. Frischinstallation und alle drei Upgrade-Pfade inklusive wiederholtem Deploy erfolgreich. CI-Nachweis folgt als PR-Check am finalen Commit.
+
+Deadlock-/Serialisierungsabbrueche werden gemaess ADR-007 hoechstens zweimal wiederholt (drei Transaktionsversuche). Constraint-Konflikte und unbekannte Fehler werden nicht wiederholt. Jeder Versuch liest Zustand und Uhrzeit erneut; externe Seiteneffekte sind in diesem Callback verboten. Vier Adaptertests pruefen Erfolgswiederholung, SQLSTATE-Klassifizierung und Versuchslimit.

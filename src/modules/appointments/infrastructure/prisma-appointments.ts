@@ -44,9 +44,18 @@ async function translate<T>(work: () => Promise<T>): Promise<T> {
     throw new AppointmentError("UNAVAILABLE", "Termin konnte nicht gespeichert oder gelesen werden.");
   }
 }
+async function retryTransaction<T>(work: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try { return await work(); } catch (e) {
+      const retryable = e instanceof Prisma.PrismaClientKnownRequestError &&
+        (e.code === "P2034" || e.code === "P2010" && ["40001", "40P01"].includes(String(e.meta?.code)));
+      if (!retryable || attempt >= 2) throw e;
+    }
+  }
+}
 export function prismaAppointments(db: PrismaClient): AppointmentRepository {
   return {
-    transaction: work => translate(() => db.$transaction(tx => work(appointmentWriter(tx)), { isolationLevel: "ReadCommitted", timeout: 15000, maxWait: 10000 })),
+    transaction: work => translate(() => retryTransaction(() => db.$transaction(tx => work(appointmentWriter(tx)), { isolationLevel: "ReadCommitted", timeout: 15000, maxWait: 10000 }))),
     read: work => translate(() => db.$transaction(tx => work(reader(tx)), { isolationLevel: "RepeatableRead" })),
   };
 }
