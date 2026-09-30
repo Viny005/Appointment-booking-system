@@ -24,6 +24,8 @@ model User {
   updatedAt     DateTime     @updatedAt
   sessions      Session[]
   accounts      Account[]
+  advisorProfile AdvisorProfile?
+  canManageOwnServices Boolean @default(false)
 }
 
 model Session {
@@ -68,4 +70,84 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   @@index([identifier])
+}
+
+enum ProfileStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+enum MeetingMode {
+  IN_PERSON
+  PHONE
+  ONLINE
+}
+
+enum MeetingModePolicy {
+  FIXED
+  CLIENT_CHOICE
+}
+
+enum PhoneDirection {
+  ADVISOR_CALLS_CLIENT
+  CLIENT_CALLS_ADVISOR
+}
+
+model AdvisorProfile {
+  id                String @id
+  name              String @default("")
+  title             String @default("")
+  shortDescription  String @default("")
+  notificationEmail String @default("")
+  imageKey          String?
+  status            ProfileStatus @default(DRAFT)
+  userId            String? @unique
+  user              User? @relation(fields: [userId], references: [id], onDelete: Restrict)
+  version           Int @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  services          Service[]
+  outgoingRelations ProfileRelation[] @relation("RelationSource")
+  incomingRelations ProfileRelation[] @relation("RelationTarget")
+  @@index([status])
+}
+
+model Service {
+  id                  String @id
+  advisorProfileId    String
+  advisorProfile      AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Restrict)
+  name                String
+  description         String
+  durationMinutes     Int
+  active              Boolean @default(false)
+  meetingModePolicy   MeetingModePolicy
+  allowedMeetingModes MeetingMode[]
+  placeName           String?
+  visitAddress        String?
+  phoneDirection      PhoneDirection @default(ADVISOR_CALLS_CLIENT)
+  advisorPhone        String?
+  onlineUrl           String?
+  onlineProvider      String?
+  version             Int @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  @@index([advisorProfileId, active])
+}
+
+model ProfileRelation {
+  id                String @id
+  sourceProfileId   String
+  targetProfileId   String
+  sourceProfile     AdvisorProfile @relation("RelationSource", fields: [sourceProfileId], references: [id], onDelete: Restrict)
+  targetProfile     AdvisorProfile @relation("RelationTarget", fields: [targetProfileId], references: [id], onDelete: Restrict)
+  active            Boolean @default(true)
+  proposedToClient  Boolean @default(true)
+  defaultSelected   Boolean @default(false)
+  clientCanRemove   Boolean @default(true)
+  version           Int @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@unique([sourceProfileId, targetProfileId])
+  @@index([targetProfileId])
 }
