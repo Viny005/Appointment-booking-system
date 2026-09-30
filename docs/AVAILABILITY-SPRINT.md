@@ -1,0 +1,59 @@
+# Availability-Sprint
+
+Basis: main-Merge `be73bd9f5e868cf1ba2fbf7ece69fae6584a2628`; Branch `feat/availability-engine`. Verbindlich bleiben [D1](spec/D1-datenmodell.md), [D2](spec/D2-datentypen.md), [N2](spec/N2-querschnittskonzepte.md), [ADR-003](../adr/003-central-availability-engine.md) und die [Laufzeitsicht](arch/A06-runtime-view.md). Keine fachliche Spezifikation wurde geändert.
+
+## Umfang und Modelle
+
+WeeklyAvailability speichert Profil, ISO-Wochentag 1–7 (Montag–Sonntag), lokale Start-/Endminute, Version und Zeitstempel. Null bis mehrere getrennte Intervalle pro Tag. Der Bearbeitungsbefehl ersetzt ausdrücklich den vollständigen ausgewählten Wochentag, auch durch eine leere Liste; er fügt nicht unbemerkt zu einem alten Stand hinzu. Zeilen-IDs sind technische Identitäten des jeweiligen Satzes.
+
+AvailabilityException speichert Profil, AvailabilityExceptionType (BLOCK_DAY, REPLACE_DAY, ADD_INTERVAL), SQL-DATE-Grenzen, active, version und Zeitstempel. AvailabilityExceptionInterval enthält die lokalen Intervalle eines Satzes. Nur BLOCK_DAY darf einen mehrtägigen Bereich umfassen; beide Grenzen sind eingeschlossen. REPLACE_DAY darf leer sein. Ein inaktiver Ersatzsatz wird wiederverwendet statt einen zweiten Ersatzsatz für dasselbe Datum anzulegen. Ausnahmen werden deaktiviert, nicht fachlich hard gelöscht.
+
+AdvisorProfile.availabilityVersion versioniert das gesamte Availability-Aggregat unabhängig von der bisherigen Profilversion. Neue Migration: `20260930100000_availability_engine`. Die beiden gemergten Migrationen und der Development-Seed bleiben unverändert. Keine persistierten Slots, Appointment- oder Reservation-Tabellen.
+
+## Zeitmodell und Bibliotheksentscheidung
+
+LocalDate ist ein strikt geprüftes ISO-Kalenderdatum, LocalTime ein minutengenaues HH:mm von 00:00 bis 23:59. Lokale Bereiche verwenden ganzzahlige Minuten ab Mitternacht; ausschließlich die exklusive Endgrenze darf 1440/24:00 sein. Damit ist ein vollständiger Tag darstellbar, ohne eine Startzeit 24:00 oder einen Bereich über Mitternacht zu erlauben. UTC-Intervalle verwenden Epoch-Millisekunden, öffentliche Slots ISO-UTC-Strings. Alle Intervalle sind halboffen, Dauer wird in verstrichenen Minuten gemessen.
+
+Entscheidung: exakt gepinntes `@js-temporal/polyfill` 0.5.1 (plus transitive JSBI). Node 24.15.0 meldet lokal `typeof Temporal === undefined`. Date allein bietet keine passenden expliziten Operationen für doppelte lokale Zeiten und Kalenderaddition. Der Polyfill stellt PlainDate/PlainDateTime/Instant/ZonedDateTime bereit, ohne globale Objekte zu verändern. Die [Upstream-Dokumentation](https://github.com/js-temporal/temporal-polyfill) nennt Node >=14; npm-Metadaten >=12. Node 24 liegt innerhalb beider Angaben und wird durch Build/Tests geprüft. Wartungsprüfung am 30.09.2026: Repository nicht archiviert, letzter Main-Commit vom 22.09.2026 (`c55b211de913320d8aba32c456bb45914739f414`); veröffentlichte Version 0.5.1 vom 31.03.2025. Keine Behauptung einer neueren Paketveröffentlichung. APIs sind hinter dem Availability-Zeitmodell gekapselt; eine spätere native Temporal-Umstellung kann separat erfolgen.
+
+Die [Temporal-Zonenoperationen](https://tc39.es/proposal-temporal/docs/zoneddatetime.html) verwenden IANA-/Intl-Daten der Runtime. Europe/Berlin ist fest. Keine selbst gepflegten DST-Tabellen oder angenommenen 24-Stunden-Kalendertage. UTC-Konvertierung teilt einen Tag an den von Temporal gelieferten Zeitzonenübergängen. Lokale Fenster werden für jedes konstante Offsetsegment projiziert und geschnitten. Dies verhindert falsche durchgehende Verfügbarkeit bei einem Teilbereich der doppelten Herbststunde.
+
+Slotkandidaten verwenden earlier/later mit anschließendem Vergleich des lokalen Rückgabewerts: Frühjahrslücken fallen heraus, doppelte Herbstwerte bleiben zwei Instants. Slotantworten enthalten startUtc, endUtc, localDate, localTime, offset und timeZone; die spätere UI kann beide eindeutig beschriften. Beispiele: 29.03.2026 02:30 liefert nichts; 25.10.2026 02:30 liefert 00:30Z/+02:00 und 01:30Z/+01:00.
+
+## Ausnahmen und ausdrückliche Fusion
+
+Auflösung: Wochenplan → gegebenenfalls REPLACE_DAY → ADD_INTERVAL → BLOCK_DAY. Blockierungen gewinnen immer. Anschließend werden nur die berechneten Intervalle normalisiert; eine Abfrage ändert keine gespeicherten Regeln.
+
+Beim Bearbeiten werden Überschneidungen und direkt angrenzende Intervalle als zusammenführbar erkannt. Der Vorschlag enthält normalisierte Bereiche, erwartete Aggregatversion, betroffene Ausnahme-IDs und einen deterministischen Bestätigungswert. Ohne exakt passenden Wert wird nichts geschrieben. Das ist kein Geheimtoken oder Autorisierungsnachweis; Autorisierung und Version werden separat erneut geprüft.
+
+Wochenvorschläge vereinigen nur zusammenhängende Bereiche; getrennte Lücken bleiben. Bei einer Ergänzung, die Wochenplan oder Tagesausnahmen überlappt/berührt, bietet die Application ausdrücklich einen REPLACE_DAY-Satz der resultierenden Tagesverfügbarkeit an. Der Vorschlag benennt die abzulösenden ADD_INTERVAL-Sätze; ein vorhandener Ersatzsatz wird wiederverwendet. Damit wird nicht still der Wochenplan verändert. Nach bestätigter Umwandlung folgt dieser konkrete Tag bewusst seinem Ersatzsatz statt künftigen Wochenplanänderungen. BLOCK_DAY bleibt unberührt; eine Sperre darf Konflikte beim Bearbeiten nicht verdecken. Eine veraltete Bestätigung wird abgewiesen. Auch eine Wochenplanänderung prüft vorhandene aktive Ergänzungen: Neu entstehende Überschneidungen erfordern einen Vorschlag mit ausdrücklich benannten Tagesersatzsätzen und deaktivierten Ergänzungen. Alle bestätigten Änderungen committen gemeinsam.
+
+## Algorithmus und Ports
+
+[AF-04](spec/F3-anwendungsfunktionen.md#af-04) bis [AF-10](spec/F3-anwendungsfunktionen.md#af-10): effektive Tagesintervalle jedes explizit übergebenen tatsächlichen Teilnehmers berechnen, nach UTC projizieren, Schnittmenge bilden, Vereinigungsmenge der Belegungen abziehen, vollständige Servicedauer auf Rasterstarts prüfen. ProfileRelation wird dabei nicht gelesen und erzeugt keine Teilnehmer. Die spätere Teilnehmerauswahl/Bestätigung muss ihre eigene zulässige Teilnehmermenge bestimmen.
+
+Standardraster 30 Minuten, erlaubt 15/30/60, ab lokaler Mitternacht. Mindeststart einschließlich now + 24 verstrichene Stunden; Höchststart einschließlich now + drei lokale Kalendermonate mit Kürzung auf den letzten Monatstag. Temporal behält bei Kalenderaddition möglichst den bisherigen Offset, verwendet bei einem nicht existierenden Ziel die kompatible Vorwärtsauflösung. Dies konkretisiert die technisch notwendige DST-Grenzauflösung, ändert aber weder Vorlauf noch Kalenderhorizont. Der Endzeitpunkt muss vollständig frei sein, darf aber nach der Höchststartgrenze liegen. Keine Pufferzeit.
+
+AvailabilityRepository mit Reader-/Writer-Ports kapselt Prisma. OccupancyReader erhält tatsächliche Profil-IDs und einen UTC-Abfragebereich; sein Vertrag liefert alle überlappenden bestätigten Belegungen dieser Profile, auch wenn sie vor dem Abfragebereich beginnen. Er ist verpflichtend injiziert, ohne produktiven Empty-Default. Tests verwenden synthetische Belegungen. Appointment-Persistenz implementiert den Port erst im Folgesprint; aktuelle Abfragen reservieren nichts und ersetzen keine spätere atomare Buchungsprüfung.
+
+AvailabilityManagement: Wochenverfügbarkeit lesen/Tag ersetzen, Ausnahmen lesen/anlegen/ändern/deaktivieren, Datumsbereich blockieren, effektiven Tag und gemeinsame Tagesverfügbarkeit berechnen. PublicAvailability: getBookableDays/getBookableSlots. Letztere laden aktive vollständige Profile und den aktiven Service des Primärprofils serverseitig; Dauer stammt nie aus öffentlicher Eingabe. Ausgabe ausschließlich Datumswerte beziehungsweise sichere Slots, keine E-Mails, Konten oder Verwaltungsdaten. Ein jetzt-Wert pro gesamter Abfrage, gebündelte Daten-/Belegungsabfrage und Repeatable-Read für Repositorydaten. OccupancyReader ist derzeit ein separater Lesekontrakt; endgültige gemeinsame Transaktionssicht wird bei Booking integriert.
+
+Abfragen sind auf höchstens 101 Tage und 50 tatsächliche Profile begrenzt, Änderungen auf höchstens 96 Intervalle pro Satz. Diese technischen Ressourcenlimits erlauben den gesamten Dreimonatshorizont. Kein vorab berechneter Slotbestand. Das vollständige Lastprofil/p95-Ziel aus A10 ist damit noch nicht als bestanden behauptet.
+
+## Rechte, Konkurrenz und SQL
+
+Bestehender Session-Guard liefert die Actor-ID an die server-only Kompositionsstelle. Kein neuer HTTP-Endpunkt oder Browser-Actor-Feld. Jede interne Leseoperation und Mutation prüft aktiven ADMIN oder ADVISOR mit aktuell eigenem zugeordnetem Profil. Keine Relationsrechte oder erforderliche canManageOwnServices-Berechtigung für Availability.
+
+Mutationen sperren zuerst User, dann AdvisorProfile, anschließend Kinddaten; dieselbe Reihenfolge wie der Katalog. Nach Sperrerwerb werden Identität, Regeln und erwartete availabilityVersion gelesen. Eine erfolgreiche Mutation erhöht sie genau einmal; konkurrierende Befehle mit gleicher Version können nicht beide erfolgreich sein. SQL-Fehler rollen die vollständige Transaktion zurück; Aufrufer erhalten strukturierte Fehler statt roher Constraints.
+
+SQL sichert Wochentag, lokale Grenzen/start<end, nichtnegative Versionen, gültige Datumsbereiche, einzelne Tage für Ergänzung/Ersatz, Enum und RESTRICT-FKs. Partieller Unique-Index erlaubt insgesamt nur einen REPLACE_DAY-Satz je Profil/Datum, auch bei Deaktivierung. GiST-Exclusion-Constraints mit PostgreSQL-Erweiterung btree_gist verhindern überlappende Wochenintervalle bzw. Intervalle desselben Ausnahmesatzes. Angrenzung ist SQL-seitig zulässig; der Bearbeitungsworkflow verlangt dafür ausdrücklich Fusion. Aufgeschobene Constraint-Trigger prüfen bei Commit: BLOCK_DAY ohne Intervalle, ADD_INTERVAL mit mindestens einem Intervall, auch nach Löschung/Verschiebung eines Kindintervalls. Übergreifende Fusion gegen Wochenplan/andere Sätze bleibt unter Profilsperre Application-Aufgabe.
+
+## Validierung und Grenzen
+
+Unit-Tests decken Werte, Priorität, Fusion, Schnittmenge, Belegung, Dauer, Raster, beide Fenstergrenzen, Monatsende und DST ab. PostgreSQL-Tests umgehen Domain für Constraints, prüfen Rechte, parallele Wochen-/Ausnahmeänderungen, unveränderte Daten nach Konflikt und ausdrückliche Fusionsbestätigung. Bestehende Identity-/Katalogtests laufen unverändert mit.
+
+CI mit PostgreSQL 17.11 prüft frische DB, Upgrade vom Foundation-Schema sowie separat vom vollständigen gemergten Profil-/Service-Schema unter Erhalt synthetischer Bestandsdaten, wiederholtes migrate deploy und den Development-Seed zweimal. Bei der Wiederaufnahme war Docker verfügbar. Die Migration und 44 Integrationstests wurden vor dem Commit lokal auf isoliertem PostgreSQL 17.11 erfolgreich ausgeführt, einschließlich frischer DB und beider Upgradepfade. Bestehende lokale Datenbanken wurden nicht verändert. GitHub Actions wiederholt die Nachweise auf dem finalen PR-Commit. Alle vorgeschriebenen npm-/Prisma-/Dokumentationsprüfungen laufen dort ebenfalls. Vite-Konfigurationsimport enthält jetzt .ts; TypeScript erlaubt diese Extension im bestehenden noEmit-Projekt, ohne Warnungsunterdrückung.
+
+Bewusst verschoben: Appointment-/Booking-/Reservation-Persistenz, finale Buchung, Draft, Kundenformular, Gäste, Management-Token, E-Mail/Outbox/ICS/Reminder, Wizard und Kalender-UI. Keine Payment-, Shop- oder CRM-Funktion. Keine Spezifikationswidersprüche gefunden; die genannten technischen Konkretisierungen sind hier ausdrücklich dokumentiert.
+
+Lokale Ergebnisse: 142 Unit-Tests (61 neu), 44 PostgreSQL-Integrationstests (23 neu); npm ci, Prisma generate/validate, lint, typecheck, Produktionsbuild, npm audit (0 Schwachstellen) und Dokumentationsprüfung erfolgreich. Git-Diff-Prüfung schließt auch neue Dateien nach dem Staging ein. Die finalen CI-Links werden in der PR dokumentiert.

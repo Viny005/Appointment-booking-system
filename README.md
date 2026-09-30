@@ -6,7 +6,7 @@ Webanwendung zur Buchung und Verwaltung von Beratungsterminen. Kunden wählen oh
 
 ## Projektstatus
 
-Stand: 2026-09-30. Neben der [Foundation](docs/FOUNDATION.md) sind jetzt Domain, Application und Persistenz für Profile, Services und direkte Profilbeziehungen implementiert. Umfang und Nachweise: [Profil-/Service-Sprint](docs/PROFILE-SERVICE-SPRINT.md). Noch keine Terminbuchung, Verfügbarkeitsberechnung oder Verwaltungsoberfläche.
+Stand: 2026-09-30. Neben der [Foundation](docs/FOUNDATION.md) sind jetzt Domain, Application und Persistenz für Profile, Services und direkte Profilbeziehungen implementiert. Umfang und Nachweise: [Profil-/Service-Sprint](docs/PROFILE-SERVICE-SPRINT.md). Die [Availability Engine](docs/AVAILABILITY-SPRINT.md) ergänzt Wochenregeln, Ausnahmen, Schnittmengen und DST-sichere Slotberechnung. Noch keine finale Terminbuchung oder Verwaltungsoberfläche.
 
 ## Dokumentation
 
@@ -28,7 +28,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/profile-service-domain`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/availability-engine`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
 
 ## Lokal starten
 
@@ -98,4 +98,4 @@ Unter POSIX beide Umgebungsvariablen entsprechend exportieren und nach dem Test 
 
 ## Implementierungsbereitschaft
 
-[READY-FOR-IMPLEMENTATION](docs/READY-FOR-IMPLEMENTATION.md) dokumentiert die getroffenen Entwicklungsentscheidungen und die Startcheckliste. [LEGAL-COMPLIANCE-DE](docs/LEGAL-COMPLIANCE-DE.md) trennt technische Pflichten von noch ausstehenden Betreiberfreigaben vor Produktion. Der Dokumentationsstand enthält weiterhin keinen funktionalen Anwendungscode.
+[READY-FOR-IMPLEMENTATION](docs/READY-FOR-IMPLEMENTATION.md) dokumentiert die getroffenen Entwicklungsentscheidungen und die Startcheckliste. [LEGAL-COMPLIANCE-DE](docs/LEGAL-COMPLIANCE-DE.md) trennt technische Pflichten von noch ausstehenden Betreiberfreigaben vor Produktion. Die Dokumentationsbaseline ist von den implementierten Sprints und deren jeweiligen Nachweisen getrennt.
