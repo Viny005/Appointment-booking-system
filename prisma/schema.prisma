@@ -108,6 +108,9 @@ model AdvisorProfile {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   services          Service[]
+  availabilityVersion Int @default(0)
+  weeklyAvailability WeeklyAvailability[]
+  availabilityExceptions AvailabilityException[]
   outgoingRelations ProfileRelation[] @relation("RelationSource")
   incomingRelations ProfileRelation[] @relation("RelationTarget")
   @@index([status])
@@ -150,4 +153,48 @@ model ProfileRelation {
   updatedAt         DateTime @updatedAt
   @@unique([sourceProfileId, targetProfileId])
   @@index([targetProfileId])
+}
+
+
+enum AvailabilityExceptionType {
+  BLOCK_DAY
+  REPLACE_DAY
+  ADD_INTERVAL
+}
+
+model WeeklyAvailability {
+  id String @id
+  advisorProfileId String
+  advisorProfile AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Restrict)
+  weekday Int
+  startMinute Int
+  endMinute Int
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([advisorProfileId, weekday])
+}
+
+model AvailabilityException {
+  id String @id
+  advisorProfileId String
+  advisorProfile AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Restrict)
+  type AvailabilityExceptionType
+  startDate DateTime @db.Date
+  endDate DateTime @db.Date
+  active Boolean @default(true)
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  intervals AvailabilityExceptionInterval[]
+  @@index([advisorProfileId, startDate, endDate])
+}
+
+model AvailabilityExceptionInterval {
+  id String @id
+  exceptionId String
+  exception AvailabilityException @relation(fields: [exceptionId], references: [id], onDelete: Restrict)
+  startMinute Int
+  endMinute Int
+  @@index([exceptionId])
 }
