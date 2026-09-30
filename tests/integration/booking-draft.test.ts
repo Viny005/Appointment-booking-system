@@ -1,9 +1,11 @@
 import "dotenv/config";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID, randomBytes } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 import { BookingDrafts } from "@/modules/booking/application/drafts";
+import { aesSecretBox } from "@/modules/notifications/infrastructure/secret-box";
+import { bookingNotificationPlanner } from "@/modules/notifications/infrastructure/planner";
 import { prismaDrafts } from "@/modules/booking/infrastructure/prisma-drafts";
 import { generateManagementToken } from "@/modules/appointments/infrastructure/management-token";
 import type { BookingResult } from "@/modules/appointments/application/booking";
@@ -13,7 +15,7 @@ import { DRAFT_TTL, IDEMPOTENCY_TTL } from "@/modules/booking/domain/draft";
 import { profileDetails, serviceDetails } from "../fixtures/catalog";
 const connectionString = process.env.TEST_DATABASE_URL;
 if (!connectionString || !new URL(connectionString).pathname.endsWith("_test")) throw new Error("Separate TEST_DATABASE_URL required");
-const db = new PrismaClient({ adapter: new PrismaPg({ connectionString }) }), repo = prismaDrafts(db);
+const db = new PrismaClient({ adapter: new PrismaPg({ connectionString }) }), repo = prismaDrafts(db, bookingNotificationPlanner(aesSecretBox(randomBytes(32).toString("base64"))));
 const hashes: string[] = [], profiles: string[] = [];
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 function value<T>(r: BookingResult<T>): T { if (!r.ok) throw new Error(r.error.code); return r.value; }
@@ -35,6 +37,7 @@ async function fixture() {
 afterAll(async () => { await db.$transaction(async tx => {
  await tx.bookingIdempotency.deleteMany({ where: { capabilityHash: { in: hashes } } }); await tx.bookingDraft.deleteMany({ where: { capabilityHash: { in: hashes } } });
  const where = { appointment: { service: { advisorProfileId: { in: profiles } } } };
+ await tx.notification.deleteMany({ where });
  await tx.appointmentReservation.deleteMany({ where }); await tx.appointmentGuest.deleteMany({ where }); await tx.appointmentParticipant.deleteMany({ where }); await tx.appointment.deleteMany({ where: { service: { advisorProfileId: { in: profiles } } } });
  await tx.profileRelation.deleteMany({ where: { sourceProfileId: { in: profiles } } }); await tx.weeklyAvailability.deleteMany({ where: { advisorProfileId: { in: profiles } } }); await tx.service.deleteMany({ where: { advisorProfileId: { in: profiles } } }); await tx.advisorProfile.deleteMany({ where: { id: { in: profiles } } });
  }); await db.$disconnect(); });
