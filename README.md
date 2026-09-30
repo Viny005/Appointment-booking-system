@@ -6,9 +6,11 @@ Webanwendung zur Buchung und Verwaltung von Beratungsterminen. Kunden wählen oh
 
 ## Projektstatus
 
-Stand: 2026-09-30. Neben der [Foundation](docs/FOUNDATION.md) sind jetzt Domain, Application und Persistenz für Profile, Services und direkte Profilbeziehungen implementiert. Umfang und Nachweise: [Profil-/Service-Sprint](docs/PROFILE-SERVICE-SPRINT.md). Die [Availability Engine](docs/AVAILABILITY-SPRINT.md) ergänzt Wochenregeln, Ausnahmen, Schnittmengen und DST-sichere Slotberechnung. Der [Appointment Core](docs/APPOINTMENT-CORE-SPRINT.md) ergänzt atomare Reservierungen und persistierte Belegung. Öffentlicher Confirm-Flow, Benachrichtigungen und Verwaltungsoberfläche folgen in eigenen Sprints.
+Stand: 2026-09-30. Neben der [Foundation](docs/FOUNDATION.md) sind jetzt Domain, Application und Persistenz für Profile, Services und direkte Profilbeziehungen implementiert. Umfang und Nachweise: [Profil-/Service-Sprint](docs/PROFILE-SERVICE-SPRINT.md). Die [Availability Engine](docs/AVAILABILITY-SPRINT.md) ergänzt Wochenregeln, Ausnahmen, Schnittmengen und DST-sichere Slotberechnung. Der [Appointment Core](docs/APPOINTMENT-CORE-SPRINT.md) ergänzt atomare Reservierungen und persistierte Belegung. Die Verwaltungsoberflaechen folgen in eigenen Sprints.
 
-Der [BookingDraft-Sprint](docs/BOOKING-DRAFT-SPRINT.md) ergaenzt serverseitige Entwuerfe und idempotente Bestaetigungsorchestrierung. Der oeffentliche Confirm-Endpunkt folgt nach atomarer Outbox-Integration.
+Der [BookingDraft-Sprint](docs/BOOKING-DRAFT-SPRINT.md) ergaenzt serverseitige Entwuerfe und idempotente Bestaetigungsorchestrierung. Der oeffentliche Confirm-Endpunkt ist mit der atomaren Outbox-Integration verbunden.
+
+Der [Notification-Sprint](docs/NOTIFICATION-SPRINT.md) verbindet Bestaetigung und Outbox atomar und ergaenzt SMTP, ICS und den begrenzten Versandworker.
 
 ## Dokumentation
 
@@ -30,7 +32,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/booking-draft`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/booking-notifications`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
 
 ## Lokal starten
 
