@@ -6,7 +6,7 @@ Webanwendung zur Buchung und Verwaltung von Beratungsterminen. Kunden wählen oh
 
 ## Projektstatus
 
-Stand: 2026-09-29. Der erste Foundation-Sprint enthält das technische Next.js-/PostgreSQL-/Auth-Gerüst. Terminbuchung und weitere fachliche Funktionen sind noch nicht implementiert. Die Dokumentation beschreibt das vollständige Sollbild; aktueller Umfang und offene Arbeiten stehen im [Sprintbericht](docs/FOUNDATION.md).
+Stand: 2026-09-30. Neben der [Foundation](docs/FOUNDATION.md) sind jetzt Domain, Application und Persistenz für Profile, Services und direkte Profilbeziehungen implementiert. Umfang und Nachweise: [Profil-/Service-Sprint](docs/PROFILE-SERVICE-SPRINT.md). Noch keine Terminbuchung, Verfügbarkeitsberechnung oder Verwaltungsoberfläche.
 
 ## Dokumentation
 
@@ -28,7 +28,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Die Dokumentations-PR #1 ist gemergt. Foundation-Änderungen erfolgen auf `feat/project-foundation`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/profile-service-domain`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
 
 ## Lokal starten
 
@@ -94,7 +94,7 @@ Unter POSIX beide Umgebungsvariablen entsprechend exportieren und nach dem Test 
 
 ## Struktur
 
-`src/app`: App Router. `src/modules/{booking,availability,profiles,appointments,identity,notifications}`: jeweils domain/application/infrastructure; Fachmodule außer Identity bleiben leer. `src/shared`: gemeinsame Ports, DB-Infrastruktur und serverseitiger Web-Guard. Domain/Application importieren weder Next/React noch Prisma/Infrastruktur; ESLint schützt diese Grenze. `prisma`: Schema, Migration, Seed. `tests`: Unit- und echte DB-Integrationstests.
+`src/app`: App Router. `src/modules/{booking,availability,profiles,appointments,identity,notifications}`: jeweils domain/application/infrastructure; Identity und Profiles sind implementiert, übrige Fachmodule bleiben leer. `src/shared`: gemeinsame Ports, DB-Infrastruktur und serverseitige Web-Komposition. Domain/Application importieren weder Next/React noch Prisma/Infrastruktur; ESLint schützt diese Grenze. `prisma`: Schema, additive Migrationen, Seed. `tests`: getrennte Unit- und echte DB-Integrationstests.
 
 ## Implementierungsbereitschaft
 
