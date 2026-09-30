@@ -5,6 +5,7 @@ import type { MeetingMode } from "@/modules/profiles/domain/model";
 export type Confirmation = Omit<Awaited<ReturnType<typeof reserveAppointment>>, "rawManagementToken">;
 export type Idempotency = { id: string; capabilityHash: string; commandKey: string; payloadHash: string; appointmentId: string; result: Confirmation; expiresAt: Date };
 export interface DraftWriter extends AppointmentWriter {
+  planConfirmation(appointmentId: string, rawToken: string, now: number): Promise<void>;
   getDraft(): Promise<Draft | null>;
   saveDraft(draft: Draft): Promise<void>;
   deleteDraft(): Promise<void>;

@@ -33,9 +33,12 @@ export function draftHttp(api: BookingDrafts, origin: string, production: boolea
         if (!created.ok) return response(created, 503);
         const { cookie: raw, ...value } = created.value; return response({ ok: true, value }, 201, draftCookie(raw, production));
       }
-      const result = body.action === "review" ? await api.review(cookie) : body.action === "change" ? await api.change(cookie, body.version, body.command as DraftCommand) : null;
-      // Confirm intentionally unavailable until the outbox sprint makes delivery atomic.
+      const result = body.action === "review" ? await api.review(cookie) : body.action === "change" ? await api.change(cookie, body.version, body.command as DraftCommand) : body.action === "confirm" ? await api.confirm(cookie, body.commandKey, body.payloadHash, body.version) : null;
       if (!result) return response({ error: "INVALID_ACTION" }, 400);
+      if (body.action === "confirm" && result.ok && "appointmentId" in result.value) {
+        const { appointmentId, startUtc, endUtc, status, replay } = result.value;
+        return response({ ok: true, value: { appointmentId, startUtc, endUtc, status, replay } });
+      }
       return response(result, result.ok ? 200 : result.error.code === "CONFLICT" ? 409 : result.error.code === "NOT_FOUND" ? 404 : 400);
     } catch { return response({ error: "INVALID_REQUEST" }, 400); }
   };
