@@ -8,7 +8,8 @@ const config: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "no-referrer" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
-    ] }];
+    ] }, { source: "/manage", headers: [{ key: "Cache-Control", value: "no-store" }] },
+    { source: "/api/customer-appointment", headers: [{ key: "Cache-Control", value: "no-store" }] }];
   },
 };
 export default config;
