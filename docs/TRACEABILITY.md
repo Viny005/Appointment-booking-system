@@ -208,3 +208,5 @@ Jede Zeile ist eine vollständige Anforderung–Architektur–Abnahmekette. Best
 [BookingDraft-Sprint](BOOKING-DRAFT-SPRINT.md): serverseitiger Auswahlzustand und idempotente Orchestrierung von UC-06; atomare Benachrichtigungen bleiben ausstehend.
 
 [Notification-Sprint](NOTIFICATION-SPRINT.md) implementiert atomare Planung von UC-06 sowie AF-16/AF-17/AF-18. Kalenderclient-Abnahme und produktive Provider-/Rechtsfreigaben bleiben separat erforderlich.
+
+Kundenverwaltung (UC-08/UC-09/UC-10, AF-13/AF-14/AF-15): [Sprint 8](CUSTOMER-MANAGEMENT-SPRINT.md), Unit-/PostgreSQL-/Browserpruefungen einschliesslich strikter Frist und Capability-Schutz.
