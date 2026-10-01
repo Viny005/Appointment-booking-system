@@ -14,7 +14,7 @@ Domain: Capability-Grenzen, 24h-Regel, Befehls-Allowlist, minimale Kundenprojekt
 
 Mutation sperrt Capability-Befehl, sortierte tatsaechliche AdvisorProfile und Appointment. Danach Token, Ablauf, Widerruf und Version erneut pruefen. Gemeinsame Availability Engine mit Europe/Berlin/Temporal und exakt gewaehltem UTC-Instant; nur eigene Belegung wird ausgeschlossen. Fremde Belegungen bleiben gesperrt. Reservierungen, Termin, Outbox und Replay-Quittung committen gemeinsam. GiST und deferred Aggregate-Constraints bleiben letzte DB-Integritaetsgrenze. Bekannte Serialization-/Deadlockfehler werden maximal dreimal versucht; keine blinden Retries von Constraintfehlern.
 
-Umbuchung ersetzt Reservierungen atomar, setzt Faehigkeitsablauf auf neues Ende und behaelt deren Hash. Absage entfernt Reservierungen und widerruft Faehigkeit. Alte PENDING/FAILED-Auftraege werden SUPERSEDED und ihre Secrets/Leases entfernt. Aktuelle Empfaenger erhalten REQUEST bzw. CANCEL. Reminder-Generation wird erneuert; neuer Reminder nur bei start-24h > now. Versand bleibt at-least-once mit den dokumentierten Grenzen bereits laufender SMTP-Sendungen.
+Umbuchung ersetzt Reservierungen atomar, setzt Faehigkeitsablauf auf neues Ende und behaelt deren Hash. Absage entfernt Reservierungen und widerruft Faehigkeit. Alte PENDING/FAILED-Auftraege werden SUPERSEDED und ihre Secrets/Leases entfernt. Aktuelle Empfaenger erhalten REQUEST bzw. CANCEL. Alle Gastnachrichten tragen Herkunfts-/Art.-14-Information, damit diese auch beim Ersetzen einer noch ungesendeten Erstbestaetigung erhalten bleibt. Reminder-Generation wird erneuert; neuer Reminder nur bei start-24h > now. Versand bleibt at-least-once mit den dokumentierten Grenzen bereits laufender SMTP-Sendungen.
 
 ## Replay und Migration
 
@@ -38,4 +38,4 @@ CI prueft frische DB, wiederholte Migration und Upgrade aus Outbox-Stand mit vor
 
 Keine internen Verwaltungsrechte/UI vorweggenommen, keine Kundenkonten, kein E-Commerce. Kein fachlicher Spezifikationswiderspruch gefunden.
 
-Lokaler Endstand: 241 Unit-Tests, 129 PostgreSQL-Tests und 4 Chromium-Browsertests bestanden. npm ci, Prisma generate/validate, lint/typecheck/build, npm audit (0), frische Migration/Upgrade/wiederholtes Deploy und git diff --check erfolgreich. Dokumentationspruefung: 59 Dateien, 1214 Links, 192 IDs, keine Fehler.
+Lokaler Endstand: 241 Unit-Tests, 130 PostgreSQL-Tests und 4 Chromium-Browsertests bestanden. npm ci, Prisma generate/validate, lint/typecheck/build, npm audit (0), frische Migration/Upgrade/wiederholtes Deploy und git diff --check erfolgreich. Dokumentationspruefung: 59 Dateien, 1214 Links, 192 IDs, keine Fehler.
