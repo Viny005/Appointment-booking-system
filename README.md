@@ -36,7 +36,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/internal-appointment-management`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/audit-retention-security`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
 
 ## Lokal starten
 
@@ -102,8 +102,10 @@ Unter POSIX beide Umgebungsvariablen entsprechend exportieren und nach dem Test 
 
 ## Struktur
 
-`src/app`: App Router. `src/modules/{booking,availability,profiles,appointments,identity,notifications}`: jeweils domain/application/infrastructure; Identity, Profiles, Availability und Appointment Core sind implementiert; Booking und Notifications folgen in eigenen Sprints. `src/shared`: gemeinsame Ports, DB-Infrastruktur und serverseitige Web-Komposition. Domain/Application importieren weder Next/React noch Prisma/Infrastruktur; ESLint schützt diese Grenze. `prisma`: Schema, additive Migrationen, Seed. `tests`: getrennte Unit- und echte DB-Integrationstests.
+`src/app`: App Router. `src/modules/{booking,availability,profiles,appointments,identity,notifications}`: jeweils domain/application/infrastructure; Identity-Basis, Profiles, Availability, Appointment Core, Booking Draft, Notifications und Terminverwaltung sind implementiert; vollständige Kontoverwaltung und weitere Oberflächen folgen in eigenen Sprints. `src/shared`: gemeinsame Ports, DB-Infrastruktur und serverseitige Web-Komposition. Domain/Application importieren weder Next/React noch Prisma/Infrastruktur; ESLint schützt diese Grenze. `prisma`: Schema, additive Migrationen, Seed. `tests`: getrennte Unit- und echte DB-Integrationstests.
 
 ## Implementierungsbereitschaft
 
 [READY-FOR-IMPLEMENTATION](docs/READY-FOR-IMPLEMENTATION.md) dokumentiert die getroffenen Entwicklungsentscheidungen und die Startcheckliste. [LEGAL-COMPLIANCE-DE](docs/LEGAL-COMPLIANCE-DE.md) trennt technische Pflichten von noch ausstehenden Betreiberfreigaben vor Produktion. Die Dokumentationsbaseline ist von den implementierten Sprints und deren jeweiligen Nachweisen getrennt.
+
+[Audit-/Retention-/Security-Sprint](docs/AUDIT-RETENTION-SECURITY-SPRINT.md): transaktionaler Audit, konfigurierbare Bereinigung, HTTP-Schutz und Nonce-CSP. `npm run worker:maintenance` führt einen begrenzten Wartungslauf aus; Scheduler und Produktionsfreigaben bleiben Betriebsaufgaben.

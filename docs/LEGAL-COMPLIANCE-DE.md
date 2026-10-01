@@ -124,3 +124,7 @@ Die Quellen wurden für diese Dokumentationsrevision am 29.09.2026 recherchiert.
 ## Technischer Nachweis Sprint 7 - 30.09.2026
 
 [Notification-Sprint](NOTIFICATION-SPRINT.md) konkretisiert getrennte Empfaengerprojektionen, Gast-Erstkontaktinformation, verschluesselte kurzlebige Faehigkeiten und SMTP ohne Tracking. Die Pruefung dieses Bereichs verwendet den [offiziellen DSGVO-Text](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32016R0679) und die [Informationspflichten der EU-Kommission](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/obligations_en). Betreibertexte, Rechtsgrundlagen und Providerfreigaben bleiben offen; eine Rechtskonformitaet des spaeteren Betriebs wird nicht behauptet.
+
+## Technische Retention-Konfiguration Sprint 10
+
+[Audit-/Retention-Sprint](AUDIT-RETENTION-SECURITY-SPRINT.md) implementiert konfigurierbare Termine-/Nebenbestandsbereinigung und Schutz vor verspäteter Bereinigung. Die zusätzlichen Audit-Entwicklungswerte (12 Kalendermonate Erfolg, 30 Tage Ablehnung) sind ebenfalls keine gesetzlichen Vorgaben. Betreiberfreigabe muss jetzt ausdrücklich auch diese Kategorien, Akteurreferenzen, Proxy-/IP-Verarbeitung und Providerkopien umfassen. Quellenabgleich Art. 5/25 am 01.10.2026 anhand [EUR-Lex](https://eur-lex.europa.eu/legal-content/DE-EN/TXT/?from=de&uri=CELEX%3A32016R0679); keine neuen realen Betreiber-/Rechtsgrundlagenangaben werden behauptet.

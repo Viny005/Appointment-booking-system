@@ -119,3 +119,7 @@ Technische Quellen: [OWASP Upload](https://cheatsheetseries.owasp.org/cheatsheet
 Better Auth übernimmt die Kryptografie; der projektweite Guard erzwingt [ADR-011](../../adr/011-authentication-library.md) inklusive unveränderlicher Acht-Stunden-Grenze, 30-Minuten-Idle, deaktiviertem Cookiecache und aktueller DB-Identität. Die zusätzliche Sicherheitsgeneration bleibt bei Reset-/Deaktivierungsfehlern widerrufen; ohne gültige Generation kein privater Zugriff. Hintergrundpolls verlängern keine Sitzung.
 
 Kundenrufnummern werden nie in ICS übernommen. ADVISOR_CALLS_CLIENT zeigt dort nur die Anrufrichtung; eine geänderte Kundennummer ist allein ein Metadatenupdate. CLIENT_CALLS_ADVISOR darf die konfigurierte öffentliche Beraternummer zeigen. Entfernte Gäste erhalten nur eine empfängerbezogene Absage ihrer alten Einladung, kein CANCEL an verbleibende Empfänger. Manuelles Resend verwendet dieselbe UID/SEQUENCE und erzeugt nur ein neues Versandereignis.
+
+## Implementierungsnachweis Audit/Retention/HTTP
+
+[Sprint 10](../AUDIT-RETENTION-SECURITY-SPRINT.md) konkretisiert die oben festgelegten Regeln: konfigurierbare 5/Konto/Minute und 30/vertrauter IP/Minute, verpflichtende globale Drosselung, explizite Proxy-Vertrauensgrenze, dynamische Nonce-CSP sowie begrenzter Wartungsworker. Die technische Fristkonfiguration ersetzt keine Betreiberfreigabe.

@@ -203,12 +203,14 @@ Jede Zeile ist eine vollständige Anforderung–Architektur–Abnahmekette. Best
 
 ## Implementierungsnachweis Appointment Core
 
-[Appointment-Core-Sprint](APPOINTMENT-CORE-SPRINT.md) dokumentiert den atomaren Persistenzteil von [UC-06](spec/F2-anwendungsfaelle.md#uc-06) und [ADR-007](../adr/007-atomic-booking.md). Draft, Idempotency und Outbox stehen weiterhin aus; dieser Nachweis ist keine vollstaendige Abnahme von UC-06.
+[Appointment-Core-Sprint](APPOINTMENT-CORE-SPRINT.md) dokumentiert den atomaren Persistenzteil von [UC-06](spec/F2-anwendungsfaelle.md#uc-06) und [ADR-007](../adr/007-atomic-booking.md). Der damalige Teilnachweis wird durch die folgenden Draft-/Outbox-Sprints ergänzt.
 
-[BookingDraft-Sprint](BOOKING-DRAFT-SPRINT.md): serverseitiger Auswahlzustand und idempotente Orchestrierung von UC-06; atomare Benachrichtigungen bleiben ausstehend.
+[BookingDraft-Sprint](BOOKING-DRAFT-SPRINT.md): serverseitiger Auswahlzustand und idempotente Orchestrierung von UC-06; atomare Benachrichtigungen werden durch den folgenden Notification-Sprint ergänzt.
 
 [Notification-Sprint](NOTIFICATION-SPRINT.md) implementiert atomare Planung von UC-06 sowie AF-16/AF-17/AF-18. Kalenderclient-Abnahme und produktive Provider-/Rechtsfreigaben bleiben separat erforderlich.
 
 Kundenverwaltung (UC-08/UC-09/UC-10, AF-13/AF-14/AF-15): [Sprint 8](CUSTOMER-MANAGEMENT-SPRINT.md), Unit-/PostgreSQL-/Browserpruefungen einschliesslich strikter Frist und Capability-Schutz.
 
 Interne Termine (UC-13/UC-14/UC-21/UC-22/UC-23/UC-24/UC-25): [Sprint 9](INTERNAL-APPOINTMENT-SPRINT.md), Rechte-, Ereignis-, Concurrency- und PostgreSQL-Pruefungen.
+
+Audit/Retention/Security (AF-22, NFR-PRIV-03, NFR-SEC-10, QS-08/QS-14/QS-23): [Sprint 10](AUDIT-RETENTION-SECURITY-SPRINT.md) benennt konkrete Implementierungen und Testdateien.
