@@ -210,3 +210,5 @@ Jede Zeile ist eine vollständige Anforderung–Architektur–Abnahmekette. Best
 [Notification-Sprint](NOTIFICATION-SPRINT.md) implementiert atomare Planung von UC-06 sowie AF-16/AF-17/AF-18. Kalenderclient-Abnahme und produktive Provider-/Rechtsfreigaben bleiben separat erforderlich.
 
 Kundenverwaltung (UC-08/UC-09/UC-10, AF-13/AF-14/AF-15): [Sprint 8](CUSTOMER-MANAGEMENT-SPRINT.md), Unit-/PostgreSQL-/Browserpruefungen einschliesslich strikter Frist und Capability-Schutz.
+
+Interne Termine (UC-13/UC-14/UC-21/UC-22/UC-23/UC-24/UC-25): [Sprint 9](INTERNAL-APPOINTMENT-SPRINT.md), Rechte-, Ereignis-, Concurrency- und PostgreSQL-Pruefungen.
