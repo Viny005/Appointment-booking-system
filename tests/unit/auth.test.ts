@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import { authSettings } from "@/modules/identity/infrastructure/auth";
+vi.mock("server-only", () => ({}));
 
 const env = { NODE_ENV: "test", BETTER_AUTH_SECRET: randomBytes(32).toString("hex"), BETTER_AUTH_URL: "http://localhost:3000" } as const;
 it("disables signup, rolling refresh and cookie cache", () => {
