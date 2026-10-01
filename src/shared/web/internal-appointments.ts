@@ -1,3 +1,4 @@
+import { retentionConfiguration } from "@/modules/privacy/infrastructure/config";
 import "server-only";
 import { createHash } from "node:crypto";
 import { InternalAppointments, type CalendarCursor } from "@/modules/appointments/application/internal-management";
@@ -16,7 +17,7 @@ export async function internalAppointmentApi(headers: Headers, explicitUserActio
   const secretBox = () => { mailConfiguration(); smtpConfiguration(); return aesSecretBox(process.env.OUTBOX_ENCRYPTION_KEY ?? ""); };
   const api = new InternalAppointments(prismaInternalAppointments(getDatabase(), {
     seal: (raw, context) => secretBox().seal(raw, context), open: (cipher, context) => secretBox().open(cipher, context),
-  }), Date.now, value => createHash("sha256").update(value).digest("hex"));
+  }), Date.now, value => createHash("sha256").update(value).digest("hex"), retentionConfiguration());
   return {
     detail: (id: string) => api.detail(actor.id, id),
     list: (date: string, view: "day" | "week" | "month", limit?: number, cursor?: CalendarCursor) => api.list(actor.id, date, view, limit, cursor),

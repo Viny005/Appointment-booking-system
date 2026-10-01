@@ -1,3 +1,4 @@
+import { retentionConfiguration } from "@/modules/privacy/infrastructure/config";
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { AppointmentError, requireAppointment } from "@/modules/appointments/domain/appointment";
@@ -5,6 +6,7 @@ import { payloadFor, retryAt, type NotificationPayload, type Recipient } from ".
 import type { NotificationRepository, SecretBox, LeasedNotification } from "../application/ports";
 import { secretContext } from "./secret-box";
 import { mailInclude, appointmentRecipients } from "./planner";
+import { retentionDue } from "@/modules/privacy/domain/retention";
 const clearLease = { leaseToken: null, leaseUntil: null };
 const clearSecret = { secretCipher: null, secretExpiresAt: null, secretTokenHash: null };
 export function prismaNotifications(db: PrismaClient, box: SecretBox): NotificationRepository {
@@ -35,7 +37,7 @@ export function prismaNotifications(db: PrismaClient, box: SecretBox): Notificat
         // PASSWORD_RESET is represented but its identity-specific planner/eligibility arrives in Sprint 11.
         if (!n.appointmentId || n.type === "PASSWORD_RESET") return supersede();
         const a = await tx.appointment.findUnique({ where: { id: n.appointmentId }, include: mailInclude });
-        if (!a) return supersede();
+        if (!a || a.piiErasedAt || retentionDue(a, now.getTime(), retentionConfiguration())) return supersede();
         const recipient: Recipient = { email: n.recipientEmail, category: n.recipientCategory, advisorProfileId: n.advisorProfileId };
         const current = appointmentRecipients(a).some(r => r.email === recipient.email && r.category === recipient.category && r.advisorProfileId === recipient.advisorProfileId);
         const removal = n.type === "BOOKING_CANCELLED" && n.removedGuest && n.recipientCategory === "GUEST" && !a.guests.some(g => g.email === n.recipientEmail);

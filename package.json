@@ -19,6 +19,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "worker:maintenance": "tsx scripts/maintenance-worker.ts",
     "worker:notifications": "tsx scripts/notification-worker.ts",
     "test:browser": "playwright test"
   },

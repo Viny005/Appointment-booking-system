@@ -11,7 +11,7 @@ export interface AppointmentWriter extends AppointmentReader {
   lockProfiles(ids: string[]): Promise<void>;
   schedules: AvailabilityReader["schedules"];
   occupancy: OccupancyReader;
-  create(appointment: Appointment): Promise<void>;
+  create(appointment: Appointment, now: number): Promise<void>;
 }
 export interface AppointmentRepository {
   transaction<T>(work: (writer: AppointmentWriter) => Promise<T>): Promise<T>;
