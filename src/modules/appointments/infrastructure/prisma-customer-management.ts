@@ -49,6 +49,7 @@ function writer(tx: Prisma.TransactionClient): CustomerManagementWriter {
     async mutate(a, command, now) {
       const original = await loadById(a.id);
       let data: Prisma.AppointmentUpdateInput;
+      let timeChanged = false;
       if (command.type === "cancel") data = { status: "CANCELLED", cancelledAt: new Date(now), managementTokenRevokedAt: new Date(now) };
       else {
         let start: number;
@@ -56,6 +57,7 @@ function writer(tx: Prisma.TransactionClient): CustomerManagementWriter {
           if (parsed.epochNanoseconds !== BigInt(start) * 1000000n) throw new Error();
         } catch { throw new AppointmentError("INVALID_INPUT", "Ungültiger Terminbeginn."); }
         if (start === a.startAt.getTime() && command.meetingMode === a.meetingMode) return { status: a.status, version: a.version };
+        timeChanged = start !== a.startAt.getTime();
         const date = Temporal.Instant.fromEpochMilliseconds(start).toZonedDateTimeISO(TIME_ZONE).toPlainDate().toString();
         if (!(await available(a, date, now)).some(s => Temporal.Instant.from(s.startUtc).epochMilliseconds === start)) throw new AppointmentError("CONFLICT", "Der gewählte Slot ist nicht mehr verfügbar.");
         const snapshot = command.meetingMode === a.meetingMode ? {} : meetingSnapshot(original.service, command.meetingMode);
@@ -63,15 +65,15 @@ function writer(tx: Prisma.TransactionClient): CustomerManagementWriter {
         data = { ...snapshot, startAt: new Date(start), endAt, managementTokenExpiresAt: endAt };
       }
       // Discard obsolete claims and encrypted capabilities together with the change.
-      await tx.notification.updateMany({ where: { appointmentId: a.id, status: { in: ["PENDING", "FAILED"] } }, data: {
+      await tx.notification.updateMany({ where: { appointmentId: a.id, removedGuest: false, status: { in: ["PENDING", "FAILED"] }, ...(command.type !== "cancel" && !timeChanged ? { type: { not: "REMINDER" as const } } : {}) }, data: {
         status: "SUPERSEDED", leaseToken: null, leaseUntil: null, secretCipher: null, secretExpiresAt: null, secretTokenHash: null } });
       await tx.appointmentReservation.deleteMany({ where: { appointmentId: a.id } });
       const updated = await tx.appointment.update({ where: { id: a.id, version: a.version }, data: { ...data,
-        version: { increment: 1 }, calendarSequence: { increment: 1 }, notificationEventNumber: { increment: 1 }, reminderGeneration: { increment: 1 } }, include: mailInclude });
+        version: { increment: 1 }, calendarSequence: { increment: 1 }, notificationEventNumber: { increment: 1 }, reminderGeneration: { increment: command.type === "cancel" || timeChanged ? 1 : 0 } }, include: mailInclude });
       if (updated.status === "CONFIRMED") await tx.appointmentReservation.createMany({ data: updated.participants.map(p => ({ id: randomUUID(), appointmentId: a.id, advisorProfileId: p.advisorProfileId, startAt: updated.startAt, endAt: updated.endAt })) });
       await queueEvent(tx, updated, { eventId: `${a.id}:change:${updated.version}`, type: command.type === "cancel" ? "BOOKING_CANCELLED" : "BOOKING_CHANGED",
         method: command.type === "cancel" ? "CANCEL" : "REQUEST", now, recipients: appointmentRecipients(updated) });
-      if (command.type !== "cancel") await queueReminders(tx, updated, now);
+      if (timeChanged) await queueReminders(tx, updated, now);
       return { status: updated.status, version: updated.version };
     },
   };
