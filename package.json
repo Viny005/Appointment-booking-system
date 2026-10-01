@@ -19,7 +19,8 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
-    "worker:notifications": "tsx scripts/notification-worker.ts"
+    "worker:notifications": "tsx scripts/notification-worker.ts",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
@@ -39,6 +40,8 @@
     "mysql2": "3.24.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.0.0",
