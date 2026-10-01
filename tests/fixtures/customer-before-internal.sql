@@ -1,0 +1,2 @@
+INSERT INTO "AppointmentGuest" (id,"appointmentId",email) VALUES ('internal-upgrade-guest','draft-upgrade-appointment','guest@example.test');
+INSERT INTO "AppointmentMutationReceipt" (id,"capabilityHash","commandKey","payloadHash",result,"expiresAt") VALUES ('internal-upgrade-receipt',repeat('a',64),'internal-upgrade-command',repeat('b',64),'{"status":"CONFIRMED","version":0}',CURRENT_TIMESTAMP+INTERVAL '24 hours');
