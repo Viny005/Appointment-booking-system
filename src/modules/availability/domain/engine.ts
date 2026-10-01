@@ -97,10 +97,11 @@ export function bookingWindow(now: number) {
   const z = Temporal.Instant.fromEpochMilliseconds(now).toZonedDateTimeISO(TIME_ZONE);
   return { start: now + 24 * 60 * 60 * 1000, end: z.add({ months: 3 }, { overflow: "constrain" }).epochMilliseconds };
 }
-export function slots(date: LocalDate, free: InstantInterval[], duration: number, now: number, step = 30): Slot[] {
+export function slots(date: LocalDate, free: InstantInterval[], duration: number, now: number, step = 30, minimumLeadMilliseconds = 86400000): Slot[] {
   ensure(Number.isInteger(duration) && duration >= 1 && duration <= 480, "Dauer muss 1–480 Minuten sein.");
   ensure([15, 30, 60].includes(step), "Raster muss 15, 30 oder 60 Minuten sein.");
-  const window = bookingWindow(now), intervals = normalize(free), result: Slot[] = [];
+  ensure([0, 86400000].includes(minimumLeadMilliseconds), "Ungültige Vorlaufpolitik.");
+  const window = { ...bookingWindow(now), start: now + minimumLeadMilliseconds }, intervals = normalize(free), result: Slot[] = [];
   for (let minute = 0; minute < 1440; minute += step) for (const start of possibleInstants(date, minute)) {
     const end = start + duration * 60000;
     if (start < window.start || start > window.end || !intervals.some(r => r.start <= start && end <= r.end)) continue;
