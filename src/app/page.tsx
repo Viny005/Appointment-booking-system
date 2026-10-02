@@ -1,6 +1,2 @@
-export default function Home() {
-  return <main className="mx-auto max-w-3xl px-6 py-16">
-    <h1 className="text-3xl font-semibold">Terminverwaltung</h1>
-    <p className="mt-4">Die Terminbuchung ist noch nicht freigeschaltet.</p>
-  </main>;
-}
+import Link from "next/link";
+export default function Home(){return <main style={{maxWidth:"52rem",margin:"0 auto",padding:"3rem 1rem"}}><h1>Online-Terminvereinbarung</h1><p>Vereinbaren Sie einen Termin ohne Kundenkonto. Sie wählen Beratung, Leistung, Beteiligte und einen verfügbaren Zeitpunkt.</p><p><Link href="/book">Termin buchen</Link></p><nav aria-label="Rechtliche Informationen"><Link href="/datenschutz">Datenschutz</Link>{" · "}<Link href="/impressum">Impressum</Link></nav></main>}
