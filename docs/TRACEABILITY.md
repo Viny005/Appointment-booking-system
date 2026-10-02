@@ -204,3 +204,5 @@ Jede Zeile ist eine vollständige Anforderung–Architektur–Abnahmekette. Best
 ## Implementierungsnachweis Appointment Core
 
 [Appointment-Core-Sprint](APPOINTMENT-CORE-SPRINT.md) dokumentiert den atomaren Persistenzteil von [UC-06](spec/F2-anwendungsfaelle.md#uc-06) und [ADR-007](../adr/007-atomic-booking.md). Draft, Idempotency und Outbox stehen weiterhin aus; dieser Nachweis ist keine vollstaendige Abnahme von UC-06.
+
+[BookingDraft-Sprint](BOOKING-DRAFT-SPRINT.md): serverseitiger Auswahlzustand und idempotente Orchestrierung von UC-06; atomare Benachrichtigungen bleiben ausstehend.

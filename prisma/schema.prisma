@@ -287,3 +287,27 @@ model AppointmentReservation {
   endAt DateTime @db.Timestamptz(3)
   @@unique([appointmentId, advisorProfileId])
 }
+
+model BookingDraft {
+  id String @id
+  capabilityHash String @unique
+  payload Json
+  version Int @default(0)
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([expiresAt])
+}
+
+model BookingIdempotency {
+  id String @id
+  capabilityHash String
+  commandKey String
+  payloadHash String
+  appointmentId String
+  result Json
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now())
+  @@unique([capabilityHash, commandKey])
+  @@index([expiresAt])
+}
