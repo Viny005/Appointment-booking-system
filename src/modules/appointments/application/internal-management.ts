@@ -1,3 +1,4 @@
+import { defaultRetentionPolicy, type RetentionPolicy } from "@/modules/privacy/domain/retention";
 import { AppointmentError, requireAppointment } from "../domain/appointment";
 import { internalDetail, internalRange, planInternalChange, requireInternalAccess, requireInternalActor, type InternalActor, type InternalAppointment, type InternalCommand, type InternalPlan } from "../domain/internal-management";
 import type { Slot } from "@/modules/availability/domain/values";
@@ -9,12 +10,12 @@ export interface InternalReader {
   actor(id: string): Promise<InternalActor | null>;
   get(id: string): Promise<InternalAppointment | null>;
   slots(a: InternalAppointment, date: string, now: number): Promise<Slot[]>;
-  list(actor: InternalActor, range: { from: Date; to: Date }, limit: number, cursor?: CalendarCursor): Promise<{ items: InternalListItem[]; next: CalendarCursor | null }>;
+  list(actor: InternalActor, range: { from: Date; to: Date }, limit: number, cursor?: CalendarCursor, now?: number, policy?: RetentionPolicy): Promise<{ items: InternalListItem[]; next: CalendarCursor | null }>;
 }
 export interface InternalWriter extends InternalReader {
   lock(actorId: string, appointmentId: string): Promise<void>;
   receipt(actorId: string, key: string): Promise<InternalReceipt | null>;
-  record(actorId: string, appointmentId: string, key: string, command: InternalCommand, receipt: InternalReceipt, now: number): Promise<void>;
+  record(actorId: string, appointmentId: string, key: string, command: InternalCommand, receipt: InternalReceipt, now: number, plan: InternalPlan): Promise<void>;
   apply(a: InternalAppointment, command: InternalCommand, plan: InternalPlan, now: number): Promise<InternalResult>;
 }
 export interface InternalRepository {
@@ -22,9 +23,9 @@ export interface InternalRepository {
   write<T>(work: (tx: InternalWriter) => Promise<T>): Promise<T>;
 }
 export class InternalAppointments {
-  constructor(private readonly repository: InternalRepository, private readonly now: () => number, private readonly hash: (value: string) => string) {}
+  constructor(private readonly repository: InternalRepository, private readonly now: () => number, private readonly hash: (value: string) => string, private readonly retentionPolicy = defaultRetentionPolicy) {}
   async detail(actorId: string, id: string) {
-    return this.repository.read(async tx => { const actor = await tx.actor(actorId); requireInternalActor(actor); const a = await tx.get(id); requireInternalAccess(actor, a); return internalDetail(a); });
+    return this.repository.read(async tx => { const actor = await tx.actor(actorId); requireInternalActor(actor); const a = await tx.get(id); requireInternalAccess(actor, a); return internalDetail(a, this.now(), this.retentionPolicy); });
   }
   async slots(actorId: string, id: string, date: string) {
     return this.repository.read(async tx => { const actor = await tx.actor(actorId); requireInternalActor(actor); const a = await tx.get(id); requireInternalAccess(actor, a);
@@ -35,7 +36,7 @@ export class InternalAppointments {
     requireAppointment(Number.isInteger(limit) && limit > 0 && limit <= 100, "Ungültige Seitengröße.");
     if (cursor) requireAppointment(typeof cursor.id === "string" && cursor.id.length <= 128 && Number.isFinite(Date.parse(cursor.startUtc)), "Ungültige Seitengrenze.");
     const range = internalRange(date, view);
-    return this.repository.read(async tx => { const actor = await tx.actor(actorId); requireInternalActor(actor); return tx.list(actor, range, limit, cursor); });
+    return this.repository.read(async tx => { const actor = await tx.actor(actorId); requireInternalActor(actor); return tx.list(actor, range, limit, cursor, this.now(), this.retentionPolicy); });
   }
   async change(actorId: string, id: string, key: string, command: InternalCommand) {
     requireAppointment(typeof key === "string" && /^[A-Za-z0-9_-]{16,128}$/.test(key), "Ungültiger Befehlsschlüssel.");
@@ -51,7 +52,7 @@ export class InternalAppointments {
       }
       const plan = planInternalChange(a, command, now);
       const result = plan.noOp ? { status: a.status, version: a.version, noOp: true } : await tx.apply(a, command, plan, now);
-      await tx.record(actorId, id, key, command, { payloadHash, result, expiresAt: new Date(now + 86400000) }, now);
+      await tx.record(actorId, id, key, command, { payloadHash, result, expiresAt: new Date(now + 86400000) }, now, plan);
       return { ...result, replay: false };
     });
   }

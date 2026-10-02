@@ -46,6 +46,21 @@ import { prismaInternalAppointments, purgeInternalReceipts } from "@/modules/app
 async function user(role: "ADMIN" | "ADVISOR" = "ADMIN", profileId?: string) { const id = randomUUID(); userIds.push(id); await db.user.create({ data: { id, name: "Synthetic actor", email: `${id}@example.test`, role } }); if (profileId) await db.advisorProfile.update({ where: { id: profileId }, data: { userId: id } }); return id; }
 function internal(now = baseNow) { return new InternalAppointments(prismaInternalAppointments(db, box), () => now, hash); }
 describe("internal appointment application", () => {
+ it("audits create, metadata, guests and resend without values; replay and no-op add no event", async () => {
+   const f = await setup(), admin = await user(), key = randomUUID();
+   expect(await db.auditLog.count({ where: { resourceId: f.appointmentId, action: "APPOINTMENT_CREATED" } })).toBe(1);
+   const command = { type: "details" as const, version: 0, patch: { remarks: "SECRET-AUDIT-PROBE" } };
+   await internal().change(admin, f.appointmentId, key, command); await internal().change(admin, f.appointmentId, key, command);
+   await internal().change(admin, f.appointmentId, randomUUID(), { ...command, version: 1 });
+   expect(await db.auditLog.count({ where: { resourceId: f.appointmentId } })).toBe(2);
+   await internal().change(admin, f.appointmentId, randomUUID(), { type: "guests", version: 1, emails: [] });
+   await internal().change(admin, f.appointmentId, randomUUID(), { type: "resend", version: 2 });
+   const rows = await db.auditLog.findMany({ where: { resourceId: f.appointmentId } });
+   expect(rows).toHaveLength(4); const serialized = JSON.stringify(rows);
+   for (const secret of ["SECRET-AUDIT-PROBE", "customer@example.test", "guest@example.test", f.rawManagementToken]) expect(serialized).not.toContain(secret);
+   expect(rows.find(r => r.action === "APPOINTMENT_GUESTS_CHANGED")?.recipientCount).toBe(3);
+   expect(rows.find(r => r.action === "CONFIRMATION_RESENT")?.recipientCount).toBe(1);
+ });
  it("refreshes an unsent initial confirmation without losing its encrypted customer link", async () => { const f = await setup(), admin = await user(); const message = await db.notification.findFirstOrThrow({ where: { appointmentId: f.appointmentId, type: "BOOKING_CONFIRMATION", recipientCategory: "CUSTOMER" } }); await internal().change(admin, f.appointmentId, randomUUID(), { type: "reschedule", version: 0, startUtc: "2027-01-07T09:00:00Z", meetingMode: "PHONE" }); const leaseToken = randomUUID(); await db.notification.update({ where: { id: message.id }, data: { leaseToken, leaseUntil: new Date(baseNow + 120000), attempts: 1 } }); const prepared = await prismaNotifications(db, box).prepare({ id: message.id, leaseToken, attempts: 1 }, new Date(baseNow)); expect(prepared?.secret).toBe(f.rawManagementToken); expect(prepared?.payload.calendar).toMatchObject({ sequence: 1, startUtc: "2027-01-07T09:00:00.000Z" }); });
 
  it("authorizes an actual additional advisor independently of the primary", async () => { const f = await setup(), extra = await fixture({ start: "2027-01-07T08:00:00Z" }), advisor = await user("ADVISOR", extra.profileId); await db.$transaction(async tx => { await tx.appointmentParticipant.create({ data: { id: randomUUID(), appointmentId: f.appointmentId, advisorProfileId: extra.profileId, role: "ADDITIONAL", profileName: "Additional", profileTitle: "Advisor" } }); await tx.appointmentReservation.create({ data: { id: randomUUID(), appointmentId: f.appointmentId, advisorProfileId: extra.profileId, startAt: new Date(f.startUtc), endAt: new Date(f.endUtc) } }); }); expect((await internal().detail(advisor, f.appointmentId)).id).toBe(f.appointmentId); await internal().change(advisor, f.appointmentId, randomUUID(), { type: "details", version: 0, patch: { firstName: "Updated" } }); expect((await internal().detail(advisor, f.appointmentId)).version).toBe(1); });

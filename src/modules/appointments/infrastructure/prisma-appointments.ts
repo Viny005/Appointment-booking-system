@@ -1,3 +1,4 @@
+import { writeAudit } from "@/modules/audit/infrastructure/audit";
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { loadBookingSelection } from "@/modules/profiles/infrastructure/booking-selection";
@@ -28,13 +29,15 @@ export function appointmentWriter(tx: Prisma.TransactionClient): AppointmentWrit
     async lockProfiles(ids) {
       for (const id of [...new Set(ids)].sort()) await tx.$queryRaw`SELECT id FROM "AdvisorProfile" WHERE id = ${id} FOR UPDATE`;
     },
-    async create(appointment) {
+    async create(appointment, now) {
       const { participants, guests, ...data } = appointment;
       await tx.appointment.create({ data: { ...data,
         participants: { create: participants.map(p => ({ ...p, id: randomUUID() })) },
         guests: { create: guests.map(email => ({ email, id: randomUUID() })) },
         reservations: { create: participants.map(p => ({ id: randomUUID(), advisorProfileId: p.advisorProfileId, startAt: data.startAt, endAt: data.endAt })) },
       } });
+      const profiles = await tx.advisorProfile.findMany({ where: { id: { in: participants.map(p => p.advisorProfileId) } }, select: { notificationEmail: true } });
+      await writeAudit(tx, { actorKind: "CUSTOMER", action: "APPOINTMENT_CREATED", resource: "APPOINTMENT", resourceId: appointment.id, version: 0, changedFields: [], recipientCount: new Set([appointment.email, ...guests, ...profiles.map(p => p.notificationEmail)]).size, now });
     } };
 }
 async function translate<T>(work: () => Promise<T>): Promise<T> {

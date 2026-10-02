@@ -217,6 +217,7 @@ enum ParticipantRole {
 }
 
 model Appointment {
+  piiErasedAt DateTime? @db.Timestamptz(3)
   id String @id
   serviceId String
   service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
@@ -261,6 +262,7 @@ model Appointment {
 }
 
 model AppointmentParticipant {
+  reservation AppointmentReservation?
   id String @id
   appointmentId String
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
@@ -284,6 +286,7 @@ model AppointmentGuest {
 
 // Derived resource occupancy mandated by ADR-007; never a second appointment history.
 model AppointmentReservation {
+  participant AppointmentParticipant @relation(fields: [appointmentId, advisorProfileId], references: [appointmentId, advisorProfileId], onDelete: Restrict, onUpdate: NoAction, map: "reservation_participant")
   id String @id
   appointmentId String
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
@@ -401,5 +404,51 @@ model InternalAppointmentReceipt {
   expiresAt DateTime @db.Timestamptz(3)
   @@unique([actorId, commandKey])
   @@index([appointmentId, action, createdAt])
+  @@index([expiresAt])
+}
+
+enum AuditAction {
+  APPOINTMENT_CREATED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_DETAILS_CHANGED
+  APPOINTMENT_GUESTS_CHANGED
+  APPOINTMENT_CANCELLED
+  CONFIRMATION_RESENT
+  APPOINTMENT_COMPLETED
+  APPOINTMENT_NO_SHOW
+  RETENTION_APPLIED
+  ACCESS_DENIED
+  PROFILE_CHANGED
+  SERVICE_CHANGED
+  RELATION_CHANGED
+  AVAILABILITY_CHANGED
+  USER_CHANGED
+  PASSWORD_RESET
+  IMAGE_CHANGED
+  SETTINGS_CHANGED
+}
+model AuditLog {
+  id String @id
+  eventKey String? @unique
+  timestamp DateTime @db.Timestamptz(3)
+  actorKind String
+  actorId String?
+  action AuditAction
+  resource String
+  resourceId String?
+  version Int?
+  changedFields String[]
+  recipientCount Int @default(0)
+  result String
+  reason String?
+  occurrences Int @default(1)
+  @@index([resourceId, timestamp])
+  @@index([timestamp])
+}
+model RateLimitBucket {
+  key String @id
+  windowStart DateTime @db.Timestamptz(3)
+  count Int
+  expiresAt DateTime @db.Timestamptz(3)
   @@index([expiresAt])
 }

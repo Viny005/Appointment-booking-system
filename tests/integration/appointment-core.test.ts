@@ -149,7 +149,7 @@ describe("PostgreSQL concurrent booking", () => {
   it("rollback after insertion releases locks and leaves the next request free to commit", async () => {
     const p = await setup(); let entered!: () => void; let release!: () => void;
     const created = new Promise<void>(resolve => { entered = resolve; }), resume = new Promise<void>(resolve => { release = resolve; });
-    const failingRepo: AppointmentRepository = { ...repo, transaction: work => repo.transaction(tx => work({ ...tx, create: async appointment => { await tx.create(appointment); entered(); await resume; throw new Error("Synthetic rollback"); } })) };
+    const failingRepo: AppointmentRepository = { ...repo, transaction: work => repo.transaction(tx => work({ ...tx, create: async (appointment, now) => { await tx.create(appointment, now); entered(); await resume; throw new Error("Synthetic rollback"); } })) };
     const first = new AppointmentCore(failingRepo, runtime).bookAppointment(input(p)); await created;
     const second = core.bookAppointment(input(p)); release();
     expect((await first).ok).toBe(false); expect((await second).ok).toBe(true); expect(await count(p)).toBe(1);

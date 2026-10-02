@@ -1,3 +1,4 @@
+import { writeAudit, recordDenied } from "@/modules/audit/infrastructure/audit";
 import { randomUUID } from "node:crypto";
 import { Temporal } from "@js-temporal/polyfill";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
@@ -8,7 +9,7 @@ import { CatalogError } from "@/modules/profiles/domain/errors";
 import { appointmentRecipients, mailInclude, queueEvent, queueReminders } from "@/modules/notifications/infrastructure/planner";
 import type { SecretBox } from "@/modules/notifications/application/ports";
 import { AppointmentError, normalizeEmail, requireAppointment } from "../domain/appointment";
-import { requireInternalAccess, requireInternalActor, type InternalAppointment } from "../domain/internal-management";
+import { internalDetail, requireInternalAccess, requireInternalActor, type InternalAppointment } from "../domain/internal-management";
 import type { InternalRepository, InternalWriter, InternalReceipt } from "../application/internal-management";
 import { appointmentOccupancy } from "./prisma-appointments";
 import { generateManagementToken } from "./management-token";
@@ -16,18 +17,19 @@ const include = { ...mailInclude, service: true } satisfies Prisma.AppointmentIn
 type Row = Prisma.AppointmentGetPayload<{ include: typeof include }>;
 function aggregate(a: Row): InternalAppointment { return { ...a, participants: a.participants.map(p => ({ advisorProfileId: p.advisorProfileId, profileName: p.profileName, profileTitle: p.profileTitle, notificationEmail: p.advisorProfile.notificationEmail })) }; }
 const clear = { status: "SUPERSEDED" as const, leaseToken: null, leaseUntil: null, secretCipher: null, secretExpiresAt: null, secretTokenHash: null };
-function writer(tx: Prisma.TransactionClient, box: SecretBox): InternalWriter {
-  const actor = prismaAvailabilityReader(tx).actor;
+function writer(tx: Prisma.TransactionClient, box: SecretBox, context: { actorId: string | null; resourceId: string | null }): InternalWriter {
+  const actor = async (id: string) => { context.actorId = id; return prismaAvailabilityReader(tx).actor(id); };
   return {
     actor,
     async lock(actorId, appointmentId) {
+      context.actorId = actorId; context.resourceId = appointmentId;
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${actorId} FOR UPDATE`;
       const user = await actor(actorId); requireInternalActor(user);
       const a = await tx.appointment.findUnique({ where: { id: appointmentId }, include }); requireInternalAccess(user, a ? aggregate(a) : null);
       for (const id of a!.participants.map(p => p.advisorProfileId).sort()) await tx.$queryRaw`SELECT id FROM "AdvisorProfile" WHERE id = ${id} FOR UPDATE`;
       await tx.$queryRaw`SELECT id FROM "Appointment" WHERE id = ${appointmentId} FOR UPDATE`;
     },
-    async get(id) { const a = await tx.appointment.findUnique({ where: { id }, include }); return a ? aggregate(a) : null; },
+    async get(id) { context.resourceId = id; const a = await tx.appointment.findUnique({ where: { id }, include }); return a ? aggregate(a) : null; },
     async slots(a, day, now) {
       const date = localDate(day), ids = a.participants.map(p => p.advisorProfileId);
       const schedules = await prismaAvailabilityReader(tx).schedules(ids, date, date);
@@ -35,18 +37,23 @@ function writer(tx: Prisma.TransactionClient, box: SecretBox): InternalWriter {
       const free = subtract(commonDay(ids.map(id => schedules.get(id)!), date), await appointmentOccupancy(tx, a.id).read(ids, dayBounds(date)));
       return slots(date, free, a.durationMinutes, now, 30, 0);
     },
-    async list(user, range, limit, cursor) {
+    async list(user, range, limit, cursor, now = Date.now(), policy) {
       const rows = await tx.appointment.findMany({ where: { startAt: { lt: range.to }, endAt: { gt: range.from },
         ...(user.role === "ADMIN" ? {} : { participants: { some: { advisorProfileId: user.profileId ?? "" } } }),
         ...(cursor ? { OR: [{ startAt: { gt: new Date(cursor.startUtc), lt: range.to } }, { startAt: new Date(cursor.startUtc), id: { gt: cursor.id } }] } : {}) },
         orderBy: [{ startAt: "asc" }, { id: "asc" }], take: limit + 1, include });
-      const items = rows.slice(0, limit).map(a => ({ id: a.id, startUtc: a.startAt.toISOString(), endUtc: a.endAt.toISOString(), status: a.status, version: a.version, serviceName: a.serviceName, firstName: a.firstName, lastName: a.lastName })), last = items.at(-1);
+      const items = rows.slice(0, limit).map(row => { const a = internalDetail(aggregate(row), now, policy); return { id: a.id, startUtc: a.startUtc, endUtc: a.endUtc, status: a.status, version: a.version, serviceName: a.serviceName, firstName: a.firstName, lastName: a.lastName }; }), last = items.at(-1);
       return { items, next: rows.length > limit && last ? { startUtc: last.startUtc, id: last.id } : null };
     },
     async receipt(actorId, commandKey) { const r = await tx.internalAppointmentReceipt.findUnique({ where: { actorId_commandKey: { actorId, commandKey } } }); return r ? { payloadHash: r.payloadHash, result: r.result as InternalReceipt["result"], expiresAt: r.expiresAt } : null; },
-    async record(actorId, appointmentId, commandKey, command, receipt, now) {
+    async record(actorId, appointmentId, commandKey, command, receipt, now, plan) {
       const data = { appointmentId, action: command.type, ...receipt, createdAt: new Date(now) };
       await tx.internalAppointmentReceipt.upsert({ where: { actorId_commandKey: { actorId, commandKey } }, create: { id: randomUUID(), actorId, commandKey, ...data }, update: data });
+      if (!plan.noOp) {
+        const action = command.type === "cancel" ? "APPOINTMENT_CANCELLED" : command.type === "outcome" ? command.status === "COMPLETED" ? "APPOINTMENT_COMPLETED" : "APPOINTMENT_NO_SHOW" : command.type === "guests" ? "APPOINTMENT_GUESTS_CHANGED" : command.type === "resend" ? "CONFIRMATION_RESENT" : plan.changedFields.includes("startAt") ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_DETAILS_CHANGED";
+        const recipientCount = await tx.notification.count({ where: { eventId: `${appointmentId}:internal:${receipt.result.version}` } });
+        await writeAudit(tx, { actorKind: "INTERNAL", actorId, action, resource: "APPOINTMENT", resourceId: appointmentId, version: receipt.result.version, changedFields: command.type === "resend" ? ["recipientSelection"] : plan.changedFields, recipientCount, now });
+      }
     },
     async apply(a, command, plan, now) {
       const original = await tx.appointment.findUniqueOrThrow({ where: { id: a.id }, include });
@@ -119,7 +126,12 @@ export function prismaInternalAppointments(db: PrismaClient, box: SecretBox): In
       throw new AppointmentError("UNAVAILABLE", "Interne Terminverwaltung derzeit nicht verfügbar.");
     }
   }
-  return { read: work => run(tx => work(writer(tx, box)), "RepeatableRead"), write: work => run(tx => work(writer(tx, box)), "ReadCommitted") };
+  async function execute<T>(work: (tx: InternalWriter) => Promise<T>, isolation: "ReadCommitted" | "RepeatableRead") {
+    const context = { actorId: null as string | null, resourceId: null as string | null };
+    try { return await run(tx => work(writer(tx, box, context)), isolation); }
+    catch (e) { if (e instanceof AppointmentError && ["FORBIDDEN", "NOT_FOUND"].includes(e.code)) await recordDenied(db, context.actorId, context.resourceId, "AUTHORIZATION"); throw e; }
+  }
+  return { read: work => execute(work, "RepeatableRead"), write: work => execute(work, "ReadCommitted") };
 }
 export async function purgeInternalReceipts(db: PrismaClient, now: number, limit = 1000) {
   requireAppointment(Number.isSafeInteger(now) && Number.isInteger(limit) && limit > 0 && limit <= 1000, "Ungültige Bereinigungsgrenze.");

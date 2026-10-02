@@ -37,7 +37,7 @@ export async function reserveAppointment(tx: AppointmentWriter, input: BookAppoi
   const token = runtime.token();
   const appointment = createAppointment({ id: runtime.id(), calendarUid: runtime.id(), tokenHash: token.hash, start,
     primaryId: input.primaryProfileId, service: selection.service, participants: selection.participants, mode: input.meetingMode, customer: input.customer, guests: input.guests });
-  await tx.create(appointment);
+  await tx.create(appointment, now);
   return { ...appointmentSummary(appointment), rawManagementToken: token.raw };
 }
 export class AppointmentCore {

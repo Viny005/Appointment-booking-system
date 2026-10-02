@@ -24,7 +24,7 @@ Bereinigungsjobs, Backupfenster und Restore-Nachbereinigung nötig. Beraterrefer
 
 ## Nachweis und Änderungsregel
 
-Konkretisierung: [Architektur](../docs/arch/A07-deployment-view.md). Geplante Nachweise: [Rückverfolgbarkeit](../docs/TRACEABILITY.md). Noch kein Implementierungsnachweis. Änderungen an dieser Entscheidung erhalten eine neue ADR mit expliziter Ablösung; die bisherige Begründung bleibt erhalten.
+Konkretisierung: [Architektur](../docs/arch/A07-deployment-view.md). Geplante Nachweise: [Rückverfolgbarkeit](../docs/TRACEABILITY.md). Der technische Implementierungsnachweis wird in [Sprint 10](../docs/AUDIT-RETENTION-SECURITY-SPRINT.md) konkretisiert; Produktionsfreigaben bleiben separat. Änderungen an dieser Entscheidung erhalten eine neue ADR mit expliziter Ablösung; die bisherige Begründung bleibt erhalten.
 
 [ADR-Index](README.md)
 

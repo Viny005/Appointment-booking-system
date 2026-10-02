@@ -1,5 +1,6 @@
 import { getAuth } from "@/modules/identity/infrastructure/auth";
 import { getInternalSession } from "@/shared/web/internal-session";
+import { secureRequest } from "@/shared/web/security-boundary";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   if (!["/api/auth/sign-in/email", "/api/auth/sign-out"].includes(new URL(request.url).pathname)) return new Response(null, { status: 404 });
-  const response = await getAuth().handler(request);
+  const response = await secureRequest(request, "auth", guarded => getAuth().handler(guarded));
   response.headers.set("Cache-Control", "no-store");
   return response;
 }

@@ -1,3 +1,4 @@
+import { retentionDue, defaultRetentionPolicy, type RetentionPolicy } from "@/modules/privacy/domain/retention";
 import { Temporal } from "@js-temporal/polyfill";
 import type { Service, MeetingMode } from "@/modules/profiles/domain/model";
 import { TIME_ZONE, localDate } from "@/modules/availability/domain/values";
@@ -6,7 +7,7 @@ import { AppointmentError, meetingSnapshot, requireAppointment, validateCustomer
 export type InternalActor = { active: boolean; role: string; profileId: string | null };
 export type InternalAppointment = MeetingSnapshot & {
   id: string; serviceId: string; service: Service; serviceName: string; durationMinutes: number;
-  startAt: Date; endAt: Date; status: AppointmentStatus; version: number; calendarSequence: number;
+  startAt: Date; endAt: Date; cancelledAt: Date | null; status: AppointmentStatus; version: number; calendarSequence: number;
   firstName: string | null; lastName: string | null; email: string | null; phone: string | null; address: string | null; remarks: string | null;
   participants: { advisorProfileId: string; profileName: string; profileTitle: string; notificationEmail: string }[];
   guests: { email: string; source: "CUSTOMER" | "INTERNAL" }[];
@@ -30,7 +31,8 @@ export function internalRange(day: string, view: "day" | "week" | "month") {
 }
 const meetingFields = ["meetingMode", "placeName", "visitAddress", "phoneDirection", "advisorPhone", "onlineUrl", "onlineProvider"] as const;
 const contactFields = ["firstName", "lastName", "phone", "address", "remarks"] as const;
-export function internalDetail(a: InternalAppointment) {
+export function internalDetail(a: InternalAppointment, now: number, policy: RetentionPolicy = defaultRetentionPolicy) {
+  if (retentionDue(a, now, policy)) a = { ...a, firstName: null, lastName: null, email: null, phone: null, address: null, remarks: null, placeName: null, visitAddress: null, phoneDirection: null, advisorPhone: null, onlineUrl: null, onlineProvider: null, guests: [] };
   return { id: a.id, startUtc: a.startAt.toISOString(), endUtc: a.endAt.toISOString(), status: a.status, version: a.version,
     serviceName: a.serviceName, durationMinutes: a.durationMinutes, firstName: a.firstName, lastName: a.lastName, email: a.email, phone: a.phone, address: a.address, remarks: a.remarks,
     meetingMode: a.meetingMode, placeName: a.placeName, visitAddress: a.visitAddress, phoneDirection: a.phoneDirection, advisorPhone: a.advisorPhone, onlineUrl: a.onlineUrl, onlineProvider: a.onlineProvider,

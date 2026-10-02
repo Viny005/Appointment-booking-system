@@ -1,3 +1,4 @@
+import { writeAudit } from "@/modules/audit/infrastructure/audit";
 import { randomUUID } from "node:crypto";
 import { Temporal } from "@js-temporal/polyfill";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
@@ -74,6 +75,7 @@ function writer(tx: Prisma.TransactionClient): CustomerManagementWriter {
       await queueEvent(tx, updated, { eventId: `${a.id}:change:${updated.version}`, type: command.type === "cancel" ? "BOOKING_CANCELLED" : "BOOKING_CHANGED",
         method: command.type === "cancel" ? "CANCEL" : "REQUEST", now, recipients: appointmentRecipients(updated) });
       if (timeChanged) await queueReminders(tx, updated, now);
+      await writeAudit(tx, { actorKind: "CUSTOMER", action: command.type === "cancel" ? "APPOINTMENT_CANCELLED" : timeChanged ? "APPOINTMENT_RESCHEDULED" : "APPOINTMENT_DETAILS_CHANGED", resource: "APPOINTMENT", resourceId: a.id, version: updated.version, changedFields: command.type === "cancel" ? ["status"] : [...(timeChanged ? ["startAt", "endAt"] : []), ...(updated.meetingMode !== a.meetingMode ? ["meetingMode"] : [])], recipientCount: appointmentRecipients(updated).length, now });
       return { status: updated.status, version: updated.version };
     },
   };

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { internalRange, planInternalChange, requireInternalAccess, requireInternalActor, type InternalAppointment } from "@/modules/appointments/domain/internal-management";
 import { service } from "../fixtures/catalog";
 const now = Date.parse("2027-01-01T00:00:00Z");
-const a: InternalAppointment = { id: "a", serviceId: "s1", service: service(), serviceName: "Advice", durationMinutes: 30, startAt: new Date("2027-01-06T08:00:00Z"), endAt: new Date("2027-01-06T08:30:00Z"), status: "CONFIRMED", version: 0, calendarSequence: 0,
+const a: InternalAppointment = { id: "a", serviceId: "s1", service: service(), serviceName: "Advice", durationMinutes: 30, startAt: new Date("2027-01-06T08:00:00Z"), endAt: new Date("2027-01-06T08:30:00Z"), status: "CONFIRMED", cancelledAt: null, version: 0, calendarSequence: 0,
   firstName: "Test", lastName: "Customer", email: "customer@example.test", phone: "123", address: null, remarks: null, meetingMode: "PHONE", phoneDirection: "ADVISOR_CALLS_CLIENT", placeName: null, visitAddress: null, advisorPhone: null, onlineUrl: null, onlineProvider: null,
   participants: [{ advisorProfileId: "p1", profileName: "Test Advisor", profileTitle: "Advisor", notificationEmail: "advisor@example.test" }], guests: [{ email: "guest@example.test", source: "CUSTOMER" }] };
 describe("internal authorization and calendar windows", () => {
