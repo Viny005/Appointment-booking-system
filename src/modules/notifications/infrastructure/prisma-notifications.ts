@@ -34,8 +34,16 @@ export function prismaNotifications(db: PrismaClient, box: SecretBox): Notificat
         const n = await tx.notification.findUnique({ where: { id: job.id } });
         if (!n || n.status !== "PENDING" || n.leaseToken !== job.leaseToken || !n.leaseUntil || n.leaseUntil <= now) return null;
         const supersede = async () => { await tx.notification.update({ where: { id: n.id }, data: { status: "SUPERSEDED", ...clearLease, ...clearSecret } }); return null; };
-        // PASSWORD_RESET is represented but its identity-specific planner/eligibility arrives in Sprint 11.
-        if (!n.appointmentId || n.type === "PASSWORD_RESET") return supersede();
+        if (n.type === "PASSWORD_RESET") {
+          const parts = n.eventId.split(":");
+          const userId = parts.length === 3 && parts[0] === "password-reset" ? parts[1] : null;
+          if (!userId || n.recipientCategory !== "USER" || !n.requiresSecret || !n.secretCipher || !n.secretExpiresAt || n.secretExpiresAt <= now) return supersede();
+          const user = await tx.user.findUnique({ where: { id: userId }, select: { active: true, email: true } });
+          if (!user?.active || user.email.toLowerCase() !== n.recipientEmail.toLowerCase()) return supersede();
+          const secret = box.open(n.secretCipher, secretContext(n.id, `user:${userId}`, n.recipientEmail));
+          return { id: n.id, type: n.type, recipient: { email: n.recipientEmail, category: "USER", advisorProfileId: null }, secret, payload: n.payload as unknown as NotificationPayload };
+        }
+        if (!n.appointmentId) return supersede();
         const a = await tx.appointment.findUnique({ where: { id: n.appointmentId }, include: mailInclude });
         if (!a || a.piiErasedAt || retentionDue(a, now.getTime(), retentionConfiguration())) return supersede();
         const recipient: Recipient = { email: n.recipientEmail, category: n.recipientCategory, advisorProfileId: n.advisorProfileId };

@@ -22,3 +22,13 @@ test("production CSP has fresh nonces, working hydration and blocks injected scr
   expect(await page.evaluate(() => Object.hasOwn(window, "injectedCspProbe"))).toBe(false);
   expect(violations.length).toBeGreaterThan(0);
 });
+
+test("internal routes redirect anonymous users to the semantic login form", async ({ page }) => {
+  await page.goto("/internal");
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole("heading", { name: "Interne Anmeldung" })).toBeVisible();
+  await expect(page.getByLabel("E-Mail-Adresse")).toBeVisible();
+  await expect(page.getByLabel("Passwort")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Anmelden" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Passwort vergessen?" })).toBeVisible();
+});
