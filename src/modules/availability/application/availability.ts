@@ -139,7 +139,8 @@ export class PublicAvailability {
   constructor(private readonly repository: AvailabilityRepository, private readonly occupancy: OccupancyReader, private readonly now: () => number, private readonly step = 30) {}
   private async calculate(selection: Selection, from: string, to: string) {
     const days = datesBetween(localDate(from), localDate(to));
-    const ids = [...new Set(selection.participantIds)];
+    ensure(Array.isArray(selection.participantIds) && new Set(selection.participantIds).size === selection.participantIds.length, "Teilnehmer müssen eindeutig sein.");
+    const ids = [...selection.participantIds];
     ensure(ids.length > 0 && ids.length <= 50 && ids.includes(selection.primaryProfileId), "Tatsächliche Teilnehmer einschließlich Primärprofil erforderlich.");
     const now = this.now();
     return this.repository.read(async r => {

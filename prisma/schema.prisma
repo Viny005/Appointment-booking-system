@@ -108,6 +108,8 @@ model AdvisorProfile {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   services          Service[]
+  appointmentParticipants AppointmentParticipant[]
+  appointmentReservations AppointmentReservation[]
   availabilityVersion Int @default(0)
   weeklyAvailability WeeklyAvailability[]
   availabilityExceptions AvailabilityException[]
@@ -135,6 +137,7 @@ model Service {
   version             Int @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  appointments Appointment[]
   @@index([advisorProfileId, active])
 }
 
@@ -197,4 +200,90 @@ model AvailabilityExceptionInterval {
   startMinute Int
   endMinute Int
   @@index([exceptionId])
+}
+
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum ParticipantRole {
+  PRIMARY
+  ADDITIONAL
+}
+
+model Appointment {
+  id String @id
+  serviceId String
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  startAt DateTime @db.Timestamptz(3)
+  endAt DateTime @db.Timestamptz(3)
+  status AppointmentStatus @default(CONFIRMED)
+  timeZone String @default("Europe/Berlin")
+  version Int @default(0)
+  calendarUid String @unique
+  calendarSequence Int @default(0)
+  firstName String?
+  lastName String?
+  email String?
+  phone String?
+  address String?
+  remarks String?
+  serviceName String
+  serviceDescription String
+  durationMinutes Int
+  meetingMode MeetingMode
+  placeName String?
+  visitAddress String?
+  phoneDirection PhoneDirection?
+  advisorPhone String?
+  onlineUrl String?
+  onlineProvider String?
+  managementTokenHash String? @unique
+  managementTokenExpiresAt DateTime? @db.Timestamptz(3)
+  managementTokenRevokedAt DateTime? @db.Timestamptz(3)
+  cancelledAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  participants AppointmentParticipant[]
+  guests AppointmentGuest[]
+  reservations AppointmentReservation[]
+  @@index([status, startAt, endAt])
+  @@index([serviceId])
+}
+
+model AppointmentParticipant {
+  id String @id
+  appointmentId String
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  advisorProfileId String
+  advisorProfile AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Restrict)
+  role ParticipantRole
+  profileName String
+  profileTitle String
+  @@unique([appointmentId, advisorProfileId])
+  @@index([advisorProfileId, appointmentId])
+}
+
+model AppointmentGuest {
+  id String @id
+  appointmentId String
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  email String
+  @@unique([appointmentId, email])
+}
+
+// Derived resource occupancy mandated by ADR-007; never a second appointment history.
+model AppointmentReservation {
+  id String @id
+  appointmentId String
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  advisorProfileId String
+  advisorProfile AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Restrict)
+  startAt DateTime @db.Timestamptz(3)
+  endAt DateTime @db.Timestamptz(3)
+  @@unique([appointmentId, advisorProfileId])
 }

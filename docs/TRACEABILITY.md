@@ -200,3 +200,7 @@ Jede Zeile ist eine vollständige Anforderung–Architektur–Abnahmekette. Best
 | [R-07](arch/A11-risks-and-technical-debts.md#r-07) | [AF-32](spec/F3-anwendungsfunktionen.md#af-32) | [A11](arch/A11-risks-and-technical-debts.md), [QS-22](arch/A10-quality-requirements.md#qs-22), [QS-26](arch/A10-quality-requirements.md#qs-26) |
 | [R-08](arch/A11-risks-and-technical-debts.md#r-08) | [NFR-SEC-05](spec/N1-nichtfunktional.md#nfr-sec-05) | [A11](arch/A11-risks-and-technical-debts.md), [QS-16](arch/A10-quality-requirements.md#qs-16) |
 | [R-09](arch/A11-risks-and-technical-debts.md#r-09) | [CON-01](spec/P1-constraints.md#con-01) | [A11](arch/A11-risks-and-technical-debts.md), [QS-15](arch/A10-quality-requirements.md#qs-15) |
+
+## Implementierungsnachweis Appointment Core
+
+[Appointment-Core-Sprint](APPOINTMENT-CORE-SPRINT.md) dokumentiert den atomaren Persistenzteil von [UC-06](spec/F2-anwendungsfaelle.md#uc-06) und [ADR-007](../adr/007-atomic-booking.md). Draft, Idempotency und Outbox stehen weiterhin aus; dieser Nachweis ist keine vollstaendige Abnahme von UC-06.
