@@ -366,3 +366,16 @@ model Notification {
   @@index([appointmentId, recipientEmail, eventNumber])
   @@index([secretExpiresAt])
 }
+
+// Minimal replay acknowledgement, never a capability to read appointment details.
+model AppointmentMutationReceipt {
+  id String @id
+  capabilityHash String
+  commandKey String
+  payloadHash String
+  result Json
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([capabilityHash, commandKey])
+  @@index([expiresAt])
+}

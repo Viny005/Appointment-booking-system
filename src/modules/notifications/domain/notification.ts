@@ -28,5 +28,5 @@ export function calendarProjection(a: AppointmentMailSource): CalendarProjection
 }
 export function payloadFor(a: AppointmentMailSource, type: NotificationType, recipient: Recipient, method: "REQUEST" | "CANCEL" | null = "REQUEST", guestSource: "CUSTOMER" | "INTERNAL" = "CUSTOMER"): NotificationPayload {
   const labels: Record<NotificationType, string> = { BOOKING_CONFIRMATION: "Terminbestaetigung", BOOKING_CHANGED: "Termin aktualisiert", BOOKING_CANCELLED: "Termineinladung abgesagt", REMINDER: "Terminerinnerung", PASSWORD_RESET: "Passwort zuruecksetzen" };
-  return { calendar: calendarProjection(a), method, text: labels[type], guestSource: recipient.category === "GUEST" && type === "BOOKING_CONFIRMATION" ? guestSource : null };
+  return { calendar: calendarProjection(a), method, text: labels[type], guestSource: recipient.category === "GUEST" ? guestSource : null };
 }

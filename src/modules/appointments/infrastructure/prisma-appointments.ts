@@ -8,9 +8,9 @@ import type { OccupancyReader } from "@/modules/availability/application/ports";
 import { AppointmentError, appointmentSummary } from "../domain/appointment";
 import type { AppointmentReader, AppointmentRepository, AppointmentWriter } from "../application/ports";
 
-export function appointmentOccupancy(database: Pick<Prisma.TransactionClient, "appointment">): OccupancyReader {
+export function appointmentOccupancy(database: Pick<Prisma.TransactionClient, "appointment">, excludeAppointmentId?: string): OccupancyReader {
   return { async read(profileIds, interval) {
-    const rows = await database.appointment.findMany({ where: { status: "CONFIRMED", startAt: { lt: new Date(interval.end) }, endAt: { gt: new Date(interval.start) },
+    const rows = await database.appointment.findMany({ where: { id: excludeAppointmentId ? { not: excludeAppointmentId } : undefined, status: "CONFIRMED", startAt: { lt: new Date(interval.end) }, endAt: { gt: new Date(interval.start) },
       participants: { some: { advisorProfileId: { in: profileIds } } } }, select: { startAt: true, endAt: true }, orderBy: { startAt: "asc" } });
     return rows.map(r => ({ start: r.startAt.getTime(), end: r.endAt.getTime() }));
   } };
