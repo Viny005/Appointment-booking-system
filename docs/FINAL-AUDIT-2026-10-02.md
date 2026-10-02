@@ -29,3 +29,12 @@ Ordre d’intégration prévu après création des PR manquantes: #5 → #6 → 
 ## Conclusion
 
 La pile de développement prévue jusqu’au Sprint 15 est implémentée et validée techniquement. Le prochain acte n’est pas un ajout fonctionnel automatique: c’est la création des trois PR empilées manquantes, puis l’intégration contrôlée. Le déploiement réel reste distinct et bloqué par les décisions opérateur/juridiques et preuves d’exploitation ci-dessus.
+
+
+## Vérification complémentaire de clôture
+
+La chaîne d’ascendance a été vérifiée explicitement: Sprint 12 -> 13 -> 14 -> 15 sans rupture. Les PR #5 à #12 sont toutes ouvertes, fusionnables et leur dernier workflow `Application CI` est vert.
+
+Un dump PostgreSQL 17 de la base de validation a été restauré dans une base isolée, puis `prisma migrate deploy` a confirmé les 10 migrations sans migration en attente. La suite d’intégration a ensuite couvert 172/186 tests avant un arrêt inattendu d’un worker Windows; le seul fichier interrompu (`audit-security.test.ts`, 14 tests) a été relancé isolément et a réussi 14/14. Il s’agit d’un crash de worker de test, pas d’un échec fonctionnel observé.
+
+Le 02.10.2026, les points juridiques bloquants ont été recontrôlés sur les textes officiels actuellement publiés: DDG §5, TDDDG §25, BFSG §§2–3, VSBG §§36–37 et DSGVO Art. 13–14. Ce contrôle confirme la stratégie du dépôt: ne pas inventer les faits opérateur et maintenir ces décisions comme bloqueurs de Go-live.
