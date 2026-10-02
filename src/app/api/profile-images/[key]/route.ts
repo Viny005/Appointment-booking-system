@@ -1,0 +1,2 @@
+import {profileImageStorage} from "@/shared/web/profile-images";
+export async function GET(_:Request,{params}:{params:Promise<{key:string}>}){try{const {key}=await params,data=await profileImageStorage().read(key);if(!data)return new Response(null,{status:404});return new Response(new Uint8Array(data),{headers:{"Content-Type":"image/webp","Cache-Control":"public, max-age=86400, immutable","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; sandbox"}})}catch{return new Response(null,{status:404})}}
