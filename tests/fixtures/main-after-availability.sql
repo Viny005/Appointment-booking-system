@@ -5,8 +5,8 @@ DO $$ BEGIN
   IF (SELECT count(*) FROM "Service" WHERE id = 'availability-upgrade-service' AND "durationMinutes" = 30) <> 1 THEN
     RAISE EXCEPTION 'Existing service was not preserved';
   END IF;
-  IF (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL) <> 4 THEN
-    RAISE EXCEPTION 'All four migrations must be applied';
+  IF (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL) <> 10 THEN
+    RAISE EXCEPTION 'All migrations must be applied';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'weekly_no_overlap') THEN
     RAISE EXCEPTION 'Availability constraints missing';

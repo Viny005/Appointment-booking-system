@@ -18,7 +18,12 @@
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "worker:maintenance": "tsx scripts/maintenance-worker.ts",
+    "worker:notifications": "tsx scripts/notification-worker.ts",
+    "test:browser": "playwright test",
+    "db:backup": "tsx scripts/backup-postgres.ts",
+    "db:restore": "tsx scripts/restore-postgres.ts"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
@@ -27,16 +32,20 @@
     "better-auth": "1.7.6",
     "dotenv": "17.2.3",
     "next": "16.3.7",
+    "nodemailer": "10.0.13",
     "pg": "8.23.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "sharp": "0.35.5"
   },
   "overrides": {
     "deepmerge-ts": "8.0.0",
     "mysql2": "3.24.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.0.0",

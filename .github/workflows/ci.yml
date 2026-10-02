@@ -25,6 +25,8 @@ jobs:
       DATABASE_URL: postgresql://appointment:ci-disposable-only@localhost:5432/appointment_test
       TEST_DATABASE_URL: postgresql://appointment:ci-disposable-only@localhost:5432/appointment_test
       NEXT_TELEMETRY_DISABLED: "1"
+      BETTER_AUTH_URL: https://example.test
+      BETTER_AUTH_SECRET: ci-disposable-auth-secret-32-characters-minimum
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -79,6 +81,102 @@ jobs:
           npm run prisma:migrate
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/main-after-availability.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/availability-after-appointment.sql
+      - name: Verify upgrade from appointment core
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE booking_draft_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/booking_draft_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/main-before-availability.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/appointment-before-draft.sql
+          npm run prisma:migrate
+          npm run prisma:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/appointment-after-draft.sql
+      - name: Verify upgrade from booking draft
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE notification_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/notification_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core 20260930150000_booking_draft; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/main-before-availability.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/appointment-before-draft.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/draft-before-notifications.sql
+          npm run prisma:migrate
+          npm run prisma:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/draft-after-notifications.sql
+      - name: Verify upgrade from notification outbox
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE customer_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/customer_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core 20260930150000_booking_draft 20260930170000_notification_outbox; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/main-before-availability.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/appointment-before-draft.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/notifications-before-customer.sql
+          npm run prisma:migrate
+          npm run prisma:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/notifications-after-customer.sql
+      - name: Verify upgrade from customer management
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE internal_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/internal_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core 20260930150000_booking_draft 20260930170000_notification_outbox 20261001090000_customer_management; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/main-before-availability.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/appointment-before-draft.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/notifications-before-customer.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/customer-before-internal.sql
+          npm run prisma:migrate
+          npm run prisma:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/customer-after-internal.sql
+      - name: Verify upgrade from internal appointment management
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE audit_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/audit_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core 20260930150000_booking_draft 20260930170000_notification_outbox 20261001090000_customer_management 20261001100000_internal_appointment_management; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          for fixture in main-before-availability appointment-before-draft notifications-before-customer customer-before-internal internal-before-audit; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "tests/fixtures/$fixture.sql"
+          done
+          npm run prisma:migrate
+          npm run prisma:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/internal-after-audit.sql
+          npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - name: Verify upgrade from audit-retention-security
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE admin_foundation_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/admin_foundation_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core 20260930150000_booking_draft 20260930170000_notification_outbox 20261001090000_customer_management 20261001100000_internal_appointment_management 20261001110000_audit_retention_security; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/audit-before-admin.sql
+          npm run prisma:migrate
+          npm run prisma:migrate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/audit-after-admin.sql
+          npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -95,6 +193,8 @@ jobs:
           npm run prisma:seed
           npm run prisma:seed
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - run: npm audit
       - run: python3 tools/check_docs.py
       - run: git diff --check

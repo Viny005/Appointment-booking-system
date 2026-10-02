@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { getDatabase } from "@/shared/infrastructure/database";
+import { aesSecretBox } from "@/modules/notifications/infrastructure/secret-box";
+import { queuePasswordReset } from "./password-reset";
 
 export function authSettings(env: NodeJS.ProcessEnv = process.env) {
   const secret = env.BETTER_AUTH_SECRET;
@@ -14,7 +16,8 @@ export function authSettings(env: NodeJS.ProcessEnv = process.env) {
   return {
     secret, baseURL: url.origin, trustedOrigins: [url.origin],
     emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 16, revokeSessionsOnPasswordReset: true, resetPasswordTokenExpiresIn: 1800 },
-    session: { expiresIn: 8 * 60 * 60, disableSessionRefresh: true, cookieCache: { enabled: false } },
+    session: { expiresIn: 8 * 60 * 60, disableSessionRefresh: true, cookieCache: { enabled: false },
+      additionalFields: { securityGeneration: { type: "number" as const, defaultValue: 0, input: false } } },
     verification: { storeIdentifier: "hashed" as const },
     user: { additionalFields: {
       role: { type: ["ADMIN", "ADVISOR"] as ("ADMIN" | "ADVISOR")[], defaultValue: "ADVISOR", input: false },
@@ -23,13 +26,32 @@ export function authSettings(env: NodeJS.ProcessEnv = process.env) {
   };
 }
 export function createAuth(database: PrismaClient, env: NodeJS.ProcessEnv = process.env) {
+  const settings = authSettings(env);
   return betterAuth({
-    ...authSettings(env),
+    ...settings,
+    emailAndPassword: {
+      ...settings.emailAndPassword,
+      sendResetPassword: async ({ user, url, token }) => {
+        await queuePasswordReset(database, aesSecretBox(env.OUTBOX_ENCRYPTION_KEY ?? ""), { userId: user.id, email: user.email, url, token });
+      },
+      onPasswordReset: async ({ user }) => {
+        await database.$transaction(async tx => {
+          await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${user.id} FOR UPDATE`;
+          await tx.verification.deleteMany({ where: { value: user.id } });
+          await tx.notification.updateMany({ where: { type: "PASSWORD_RESET", recipientCategory: "USER", recipientEmail: user.email, status: "PENDING" },
+            data: { status: "SUPERSEDED", secretCipher: null, secretExpiresAt: null, secretTokenHash: null } });
+          await tx.user.update({ where: { id: user.id }, data: { passwordMutationPending: false } });
+        });
+      },
+    },
     database: prismaAdapter(database, { provider: "postgresql" }),
-    databaseHooks: { session: { create: { before: async (session) => {
-      const user = await database.user.findUnique({ where: { id: session.userId }, select: { active: true } });
-      if (!user?.active) return false;
-    } } } },
+    databaseHooks: {
+      session: { create: { before: async (session) => {
+        const user = await database.user.findUnique({ where: { id: session.userId }, select: { active: true, securityGeneration: true, passwordMutationPending: true } });
+        if (!user?.active || user.passwordMutationPending) return false;
+        return { data: { ...session, securityGeneration: user.securityGeneration } };
+      } } },
+    },
   });
 }
 let auth: ReturnType<typeof createAuth> | undefined;

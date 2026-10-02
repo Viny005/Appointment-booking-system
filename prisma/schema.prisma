@@ -26,6 +26,9 @@ model User {
   accounts      Account[]
   advisorProfile AdvisorProfile?
   canManageOwnServices Boolean @default(false)
+  securityGeneration Int @default(0)
+  passwordMutationPending Boolean @default(false)
+  internalAppointmentReceipts InternalAppointmentReceipt[]
 }
 
 model Session {
@@ -35,6 +38,7 @@ model Session {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   lastActivityAt DateTime @default(now())
+  securityGeneration Int @default(0)
   ipAddress      String?
   userAgent      String?
   userId         String
@@ -216,6 +220,7 @@ enum ParticipantRole {
 }
 
 model Appointment {
+  piiErasedAt DateTime? @db.Timestamptz(3)
   id String @id
   serviceId String
   service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
@@ -251,11 +256,16 @@ model Appointment {
   participants AppointmentParticipant[]
   guests AppointmentGuest[]
   reservations AppointmentReservation[]
+  notifications Notification[]
+  internalReceipts InternalAppointmentReceipt[]
+  notificationEventNumber Int @default(0)
+  reminderGeneration Int @default(0)
   @@index([status, startAt, endAt])
   @@index([serviceId])
 }
 
 model AppointmentParticipant {
+  reservation AppointmentReservation?
   id String @id
   appointmentId String
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
@@ -269,6 +279,7 @@ model AppointmentParticipant {
 }
 
 model AppointmentGuest {
+  source GuestSource @default(CUSTOMER)
   id String @id
   appointmentId String
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
@@ -278,6 +289,7 @@ model AppointmentGuest {
 
 // Derived resource occupancy mandated by ADR-007; never a second appointment history.
 model AppointmentReservation {
+  participant AppointmentParticipant @relation(fields: [appointmentId, advisorProfileId], references: [appointmentId, advisorProfileId], onDelete: Restrict, onUpdate: NoAction, map: "reservation_participant")
   id String @id
   appointmentId String
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
@@ -286,4 +298,160 @@ model AppointmentReservation {
   startAt DateTime @db.Timestamptz(3)
   endAt DateTime @db.Timestamptz(3)
   @@unique([appointmentId, advisorProfileId])
+}
+
+model BookingDraft {
+  id String @id
+  capabilityHash String @unique
+  payload Json
+  version Int @default(0)
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([expiresAt])
+}
+
+model BookingIdempotency {
+  id String @id
+  capabilityHash String
+  commandKey String
+  payloadHash String
+  appointmentId String
+  result Json
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now())
+  @@unique([capabilityHash, commandKey])
+  @@index([expiresAt])
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_CHANGED
+  BOOKING_CANCELLED
+  REMINDER
+  PASSWORD_RESET
+}
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SUPERSEDED
+}
+enum NotificationRecipient {
+  CUSTOMER
+  ADVISOR
+  GUEST
+  USER
+}
+model Notification {
+  id String @id
+  appointmentId String?
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  type NotificationType
+  status NotificationStatus @default(PENDING)
+  recipientCategory NotificationRecipient
+  recipientEmail String
+  advisorProfileId String?
+  eventId String
+  eventNumber Int
+  appointmentVersion Int
+  calendarSequence Int
+  reminderGeneration Int?
+  removedGuest Boolean @default(false)
+  payload Json
+  requiresSecret Boolean @default(false)
+  secretCipher String?
+  secretExpiresAt DateTime? @db.Timestamptz(3)
+  secretTokenHash String?
+  attempts Int @default(0)
+  dueAt DateTime @db.Timestamptz(3)
+  leaseToken String?
+  leaseUntil DateTime? @db.Timestamptz(3)
+  lastErrorCode String?
+  sentAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([eventId, type, recipientEmail])
+  @@index([status, dueAt, leaseUntil])
+  @@index([appointmentId, recipientEmail, eventNumber])
+  @@index([secretExpiresAt])
+}
+
+// Minimal replay acknowledgement, never a capability to read appointment details.
+model AppointmentMutationReceipt {
+  id String @id
+  capabilityHash String
+  commandKey String
+  payloadHash String
+  result Json
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([capabilityHash, commandKey])
+  @@index([expiresAt])
+}
+
+enum GuestSource {
+  CUSTOMER
+  INTERNAL
+}
+model InternalAppointmentReceipt {
+  id String @id
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  appointmentId String
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  commandKey String
+  action String
+  payloadHash String
+  result Json
+  createdAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  @@unique([actorId, commandKey])
+  @@index([appointmentId, action, createdAt])
+  @@index([expiresAt])
+}
+
+enum AuditAction {
+  APPOINTMENT_CREATED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_DETAILS_CHANGED
+  APPOINTMENT_GUESTS_CHANGED
+  APPOINTMENT_CANCELLED
+  CONFIRMATION_RESENT
+  APPOINTMENT_COMPLETED
+  APPOINTMENT_NO_SHOW
+  RETENTION_APPLIED
+  ACCESS_DENIED
+  PROFILE_CHANGED
+  SERVICE_CHANGED
+  RELATION_CHANGED
+  AVAILABILITY_CHANGED
+  USER_CHANGED
+  PASSWORD_RESET
+  IMAGE_CHANGED
+  SETTINGS_CHANGED
+}
+model AuditLog {
+  id String @id
+  eventKey String? @unique
+  timestamp DateTime @db.Timestamptz(3)
+  actorKind String
+  actorId String?
+  action AuditAction
+  resource String
+  resourceId String?
+  version Int?
+  changedFields String[]
+  recipientCount Int @default(0)
+  result String
+  reason String?
+  occurrences Int @default(1)
+  @@index([resourceId, timestamp])
+  @@index([timestamp])
+}
+model RateLimitBucket {
+  key String @id
+  windowStart DateTime @db.Timestamptz(3)
+  count Int
+  expiresAt DateTime @db.Timestamptz(3)
+  @@index([expiresAt])
 }

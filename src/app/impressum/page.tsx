@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Impressum(){return <main style={{maxWidth:"52rem",margin:"auto",padding:"2rem 1rem"}}><h1>Impressum</h1><p><strong>Entwicklungsstand – nicht zur Produktionsfreigabe.</strong></p><p>Die nach § 5 DDG erforderlichen Anbieterangaben sind noch nicht durch den späteren Betreiber freigegeben. Der Produktionsstart bleibt bis zur Eintragung und Prüfung der tatsächlichen Angaben gesperrt.</p><p><Link href="/book">Zur Buchung</Link></p></main>}

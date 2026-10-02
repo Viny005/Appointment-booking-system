@@ -1,0 +1,1 @@
+INSERT INTO "Notification" (id,"appointmentId",type,"recipientCategory","recipientEmail","eventId","eventNumber","appointmentVersion","calendarSequence",payload,"dueAt") VALUES ('customer-upgrade-notification','draft-upgrade-appointment','BOOKING_CONFIRMATION','CUSTOMER','upgrade@example.test','preserved-event',0,0,0,'{"subject":"Preserved"}',CURRENT_TIMESTAMP);
