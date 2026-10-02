@@ -140,3 +140,9 @@ export class CatalogCommands {
     });
   }
 }
+
+export class InternalCatalogQueries {
+  constructor(private readonly repository: CatalogRepository) {}
+  listProfiles() { return result(() => this.repository.read(reader => reader.listProfiles())); }
+  getProfile(id: string) { return result(() => this.repository.read(async reader => ({ aggregate: await reader.getProfile(id), relations: await reader.getRelations(id) }))); }
+}
