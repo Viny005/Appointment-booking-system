@@ -1,0 +1,3 @@
+import {spawn} from "node:child_process";import {mkdir} from "node:fs/promises";import {dirname,resolve} from "node:path";
+const url=process.env.DATABASE_URL;if(!url)throw new Error("DATABASE_URL is required");const target=resolve(process.argv[2]??"backups/appointment.dump");await mkdir(dirname(target),{recursive:true});
+const child=spawn("pg_dump",["--format=custom","--no-owner","--no-privileges","--file",target,url],{stdio:["ignore","inherit","inherit"]});const code=await new Promise<number|null>(r=>child.on("close",r));if(code!==0)throw new Error("pg_dump failed");console.log("Backup created:",target);
