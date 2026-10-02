@@ -48,7 +48,7 @@ export function prismaNotifications(db: PrismaClient, box: SecretBox): Notificat
           if (!n.secretCipher || !n.secretExpiresAt || n.secretExpiresAt <= now) { await tx.notification.update({ where: { id: n.id }, data: { status: "FAILED", lastErrorCode: "SECRET_EXPIRED", ...clearLease, ...clearSecret } }); return null; }
           secret = box.open(n.secretCipher, secretContext(n.id, a.id, n.recipientEmail));
         }
-        return { id: n.id, type: n.type, recipient, secret, payload: n.type === "REMINDER" ? payloadFor(a, "REMINDER", recipient, null) : n.payload as unknown as NotificationPayload };
+        return { id: n.id, type: n.type, recipient, secret, payload: n.type === "REMINDER" || n.type === "BOOKING_CONFIRMATION" ? payloadFor(a, n.type, recipient, n.type === "REMINDER" ? null : "REQUEST", a.guests.find(g => g.email === recipient.email)?.source) : n.payload as unknown as NotificationPayload };
       });
     },
     async finish(job, now, delivered) {

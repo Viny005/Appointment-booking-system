@@ -26,6 +26,7 @@ model User {
   accounts      Account[]
   advisorProfile AdvisorProfile?
   canManageOwnServices Boolean @default(false)
+  internalAppointmentReceipts InternalAppointmentReceipt[]
 }
 
 model Session {
@@ -252,6 +253,7 @@ model Appointment {
   guests AppointmentGuest[]
   reservations AppointmentReservation[]
   notifications Notification[]
+  internalReceipts InternalAppointmentReceipt[]
   notificationEventNumber Int @default(0)
   reminderGeneration Int @default(0)
   @@index([status, startAt, endAt])
@@ -272,6 +274,7 @@ model AppointmentParticipant {
 }
 
 model AppointmentGuest {
+  source GuestSource @default(CUSTOMER)
   id String @id
   appointmentId String
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
@@ -377,5 +380,26 @@ model AppointmentMutationReceipt {
   expiresAt DateTime @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([capabilityHash, commandKey])
+  @@index([expiresAt])
+}
+
+enum GuestSource {
+  CUSTOMER
+  INTERNAL
+}
+model InternalAppointmentReceipt {
+  id String @id
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  appointmentId String
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  commandKey String
+  action String
+  payloadHash String
+  result Json
+  createdAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  @@unique([actorId, commandKey])
+  @@index([appointmentId, action, createdAt])
   @@index([expiresAt])
 }

@@ -14,6 +14,8 @@ Der [Notification-Sprint](docs/NOTIFICATION-SPRINT.md) verbindet Bestaetigung un
 
 Der [Kundenverwaltungs-Sprint](docs/CUSTOMER-MANAGEMENT-SPRINT.md) ergaenzt Capability-Zugriff, atomare Umbuchung und Absage sowie eine datensparsame Verwaltungsseite.
 
+Der [interne Termin-Sprint](docs/INTERNAL-APPOINTMENT-SPRINT.md) ergaenzt autorisierte Kalenderdaten und Verwaltungs-Use-Cases einschliesslich Gaesten, Resend und Ergebnissen.
+
 ## Dokumentation
 
 | Einstieg | Inhalt |
@@ -34,7 +36,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/customer-appointment-management`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/internal-appointment-management`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
 
 ## Lokal starten
 

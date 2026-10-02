@@ -15,7 +15,7 @@ export async function queueEvent(tx: Prisma.TransactionClient, a: MailAppointmen
     return { id, appointmentId: a.id, type: options.type, recipientCategory: recipient.category, recipientEmail: recipient.email, advisorProfileId: recipient.advisorProfileId,
       createdAt: new Date(options.now), eventId: options.eventId, eventNumber: a.notificationEventNumber, appointmentVersion: a.version, calendarSequence: a.calendarSequence,
       reminderGeneration: options.type === "REMINDER" ? a.reminderGeneration : null, removedGuest: options.removedGuest ?? false,
-      payload: payloadFor(a, options.type, recipient, options.method === undefined ? "REQUEST" : options.method, options.guestSource) as unknown as Prisma.InputJsonValue,
+      payload: payloadFor(a, options.type, recipient, options.method === undefined ? "REQUEST" : options.method, options.guestSource ?? a.guests.find(g => g.email === recipient.email)?.source) as unknown as Prisma.InputJsonValue,
       requiresSecret: needsSecret, secretCipher: needsSecret ? options.secret!.box.seal(options.secret!.raw, secretContext(id, a.id, recipient.email)) : null,
       secretExpiresAt: needsSecret ? new Date(options.now + 86400000) : null, secretTokenHash: needsSecret ? a.managementTokenHash : null, dueAt: options.dueAt ?? new Date(options.now) };
   });
@@ -23,7 +23,11 @@ export async function queueEvent(tx: Prisma.TransactionClient, a: MailAppointmen
 }
 export async function queueReminders(tx: Prisma.TransactionClient, a: MailAppointment, now: number, selected = appointmentRecipients(a)) {
   const dueAt = reminderAt(a.startAt, now); if (!dueAt) return;
-  await queueEvent(tx, a, { eventId: `${a.id}:reminder:${a.reminderGeneration}`, type: "REMINDER", recipients: selected, now, dueAt, method: null });
+  const eventId = `${a.id}:reminder:${a.reminderGeneration}`;
+  // Re-adding a removed guest may reactivate the same unsent generation, never a SENT reminder.
+  await tx.notification.updateMany({ where: { eventId, type: "REMINDER", status: "SUPERSEDED", recipientEmail: { in: selected.map(r => r.email) }, sentAt: null },
+    data: { status: "PENDING", dueAt, attempts: 0, leaseToken: null, leaseUntil: null, lastErrorCode: null } });
+  await queueEvent(tx, a, { eventId, type: "REMINDER", recipients: selected, now, dueAt, method: null });
 }
 export function bookingNotificationPlanner(box: SecretBox) {
   return async (tx: Prisma.TransactionClient, appointmentId: string, raw: string, now: number) => {
