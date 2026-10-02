@@ -1,0 +1,3 @@
+import {spawn} from "node:child_process";import {resolve} from "node:path";
+const url=process.env.DATABASE_URL,file=process.argv[2];if(!url||!file)throw new Error("DATABASE_URL and backup file are required");if(process.env.RESTORE_CONFIRMED!=="true")throw new Error("Set RESTORE_CONFIRMED=true only for the isolated restore target.");
+const child=spawn("pg_restore",["--exit-on-error","--clean","--if-exists","--no-owner","--no-privileges","--dbname",url,resolve(file)],{stdio:["ignore","inherit","inherit"]});const code=await new Promise<number|null>(r=>child.on("close",r));if(code!==0)throw new Error("pg_restore failed");console.log("Restore completed; run prisma migrate deploy and smoke tests.");
