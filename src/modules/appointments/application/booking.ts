@@ -15,7 +15,7 @@ async function result<T>(work: () => Promise<T>): Promise<BookingResult<T>> {
   }
 }
 // Trusted server orchestration seam: future outbox writes MUST use this same transaction.
-// The raw token is transient and must never enter a normal read model, URL or log.
+// The raw token is transient: only encrypted customer outbox and its capability fragment; never normal reads or logs.
 export async function reserveAppointment(tx: AppointmentWriter, input: BookAppointmentInput, runtime: BookingRuntime, step = 30) {
   requireAppointment(!!input && Array.isArray(input.participantIds) && input.participantIds.length > 0 && input.participantIds.length <= 50, "Ungültige Teilnehmerliste.");
   await tx.selection(input.participantIds, input.primaryProfileId, input.serviceId);

@@ -6,8 +6,9 @@ import { loadBookingSelection } from "@/modules/profiles/infrastructure/booking-
 import type { DraftRepository, DraftWriter, Idempotency } from "../application/ports";
 import type { Draft, DraftPayload } from "../domain/draft";
 const asDraft = (row: { id: string; capabilityHash: string; payload: unknown; version: number; expiresAt: Date } | null): Draft | null => row ? { ...row, payload: row.payload as DraftPayload } : null;
-function writer(tx: Prisma.TransactionClient, capabilityHash: string): DraftWriter {
-  return { ...appointmentWriter(tx),
+export type ConfirmationPlanner = (tx: Prisma.TransactionClient, appointmentId: string, rawToken: string, now: number) => Promise<void>;
+function writer(tx: Prisma.TransactionClient, capabilityHash: string, plan: ConfirmationPlanner): DraftWriter {
+  return { ...appointmentWriter(tx), planConfirmation: (id, raw, now) => plan(tx, id, raw, now),
     getDraft: async () => asDraft(await tx.bookingDraft.findUnique({ where: { capabilityHash } })),
     async saveDraft(draft) { const data = { ...draft, payload: draft.payload as unknown as Prisma.InputJsonValue }; await tx.bookingDraft.upsert({ where: { capabilityHash }, create: data, update: data }); },
     async deleteDraft() { await tx.bookingDraft.deleteMany({ where: { capabilityHash } }); },
@@ -32,7 +33,7 @@ function writer(tx: Prisma.TransactionClient, capabilityHash: string): DraftWrit
     async saveIdempotency(record) { const data = { ...record, result: record.result as Prisma.InputJsonValue }; await tx.bookingIdempotency.upsert({ where: { capabilityHash_commandKey: { capabilityHash, commandKey: record.commandKey } }, create: data, update: data }); },
   };
 }
-export function prismaDrafts(db: PrismaClient): DraftRepository {
+export function prismaDrafts(db: PrismaClient, plan: ConfirmationPlanner = async () => { throw new AppointmentError("UNAVAILABLE", "Versandplanung nicht konfiguriert."); }): DraftRepository {
   return {
     read: async capabilityHash => asDraft(await db.bookingDraft.findUnique({ where: { capabilityHash } })),
     async transaction(capabilityHash, work) {
@@ -40,7 +41,7 @@ export function prismaDrafts(db: PrismaClient): DraftRepository {
         try { return await db.$transaction(async tx => {
           // Serializes draft updates, deletion and idempotency even after the draft row is removed.
           await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${capabilityHash}, 0))::text`;
-          return work(writer(tx, capabilityHash));
+          return work(writer(tx, capabilityHash, plan));
         }, { isolationLevel: "ReadCommitted", timeout: 20000, maxWait: 10000 }); }
         catch (e) {
           if (e instanceof Prisma.PrismaClientKnownRequestError && (e.code === "P2034" || e.code === "P2010" && ["40001", "40P01"].includes(String(e.meta?.code))) && attempt < 2) continue;

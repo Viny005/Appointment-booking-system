@@ -251,6 +251,9 @@ model Appointment {
   participants AppointmentParticipant[]
   guests AppointmentGuest[]
   reservations AppointmentReservation[]
+  notifications Notification[]
+  notificationEventNumber Int @default(0)
+  reminderGeneration Int @default(0)
   @@index([status, startAt, endAt])
   @@index([serviceId])
 }
@@ -310,4 +313,56 @@ model BookingIdempotency {
   createdAt DateTime @default(now())
   @@unique([capabilityHash, commandKey])
   @@index([expiresAt])
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_CHANGED
+  BOOKING_CANCELLED
+  REMINDER
+  PASSWORD_RESET
+}
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SUPERSEDED
+}
+enum NotificationRecipient {
+  CUSTOMER
+  ADVISOR
+  GUEST
+  USER
+}
+model Notification {
+  id String @id
+  appointmentId String?
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  type NotificationType
+  status NotificationStatus @default(PENDING)
+  recipientCategory NotificationRecipient
+  recipientEmail String
+  advisorProfileId String?
+  eventId String
+  eventNumber Int
+  appointmentVersion Int
+  calendarSequence Int
+  reminderGeneration Int?
+  removedGuest Boolean @default(false)
+  payload Json
+  requiresSecret Boolean @default(false)
+  secretCipher String?
+  secretExpiresAt DateTime? @db.Timestamptz(3)
+  secretTokenHash String?
+  attempts Int @default(0)
+  dueAt DateTime @db.Timestamptz(3)
+  leaseToken String?
+  leaseUntil DateTime? @db.Timestamptz(3)
+  lastErrorCode String?
+  sentAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([eventId, type, recipientEmail])
+  @@index([status, dueAt, leaseUntil])
+  @@index([appointmentId, recipientEmail, eventNumber])
+  @@index([secretExpiresAt])
 }

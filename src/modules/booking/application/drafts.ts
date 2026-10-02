@@ -46,7 +46,7 @@ export class BookingDrafts {
     draft.expiresAt = new Date(this.runtime.now() + DRAFT_TTL); await tx.saveDraft(draft);
     return { ...draftView(draft), payloadHash: this.runtime.hash(JSON.stringify(input)), service: { name: selection.service.name, durationMinutes: selection.service.durationMinutes }, participants: selection.participants.map(p => ({ name: p.name, title: p.title })) };
   })); }
-  // Trusted server use only until transactional notification integration is installed.
+  // Appointment, notification planning, idempotency and draft deletion share one transaction.
   confirm(cookie: string, commandKey: string, payloadHash: string, expectedVersion: number) { return result(() => {
     requireAppointment(typeof commandKey === "string" && /^[A-Za-z0-9_-]{16,128}$/.test(commandKey) && /^[a-f0-9]{64}$/.test(payloadHash), "Ungueltige Bestaetigung.");
     const capabilityHash = this.capability(cookie);
@@ -61,8 +61,9 @@ export class BookingDrafts {
       if (payloadHash !== actualHash) throw new AppointmentError("CONFLICT", "Zusammenfassung ist veraltet.");
       const booked = await reserveAppointment(tx, input, this.runtime);
       const { rawManagementToken, ...safe } = booked;
+      await tx.planConfirmation(safe.appointmentId, rawManagementToken, this.runtime.now());
       await tx.saveIdempotency({ id: this.runtime.id(), capabilityHash, commandKey, payloadHash, appointmentId: safe.appointmentId, result: safe, expiresAt: new Date(now + IDEMPOTENCY_TTL) });
-      await tx.deleteDraft(); return { ...safe, rawManagementToken, replay: false as const };
+      await tx.deleteDraft(); return { ...safe, replay: false as const };
     });
   }); }
 }
