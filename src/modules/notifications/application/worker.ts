@@ -7,8 +7,8 @@ export function composeMail(item: PreparedNotification, config: MailConfiguratio
   const local = (utc: string) => { const z = Temporal.Instant.from(utc).toZonedDateTimeISO("Europe/Berlin"); return `${z.toPlainDate()} ${z.toPlainTime().toString({ smallestUnit: "minute" })} (Europe/Berlin, UTC${z.offset})`; };
   if (payload.calendar) lines.push(payload.calendar.summary, `Beginn: ${local(payload.calendar.startUtc)}`, `Ende: ${local(payload.calendar.endUtc)}`, payload.calendar.description, payload.calendar.location);
   if (item.secret) {
-    requireAppointment(item.recipient.category === "CUSTOMER", "Faehigkeit nur fuer Kunden.");
-    lines.push(`Termin verwalten: ${config.publicOrigin}/manage#token=${encodeURIComponent(item.secret)}`);
+    requireAppointment(item.recipient.category === "CUSTOMER" || item.recipient.category === "USER", "Geheimnis nur fuer berechtigte Empfaenger.");
+    lines.push(item.recipient.category === "USER" ? `Passwort zuruecksetzen: ${item.secret}` : `Termin verwalten: ${config.publicOrigin}/manage#token=${encodeURIComponent(item.secret)}`);
   }
   if (payload.guestSource) lines.push(payload.guestSource === "CUSTOMER" ? "Quelle Ihrer E-Mail-Adresse: von der buchenden Person angegeben." : "Quelle Ihrer E-Mail-Adresse: von einem berechtigten internen Nutzer erfasst.", "Verarbeitete Daten: Gast-E-Mail-Adresse und Terminzuordnung; Zweck: Einladung und notwendige Terminbenachrichtigungen.", `Datenschutzinformation fuer Gaeste: ${config.guestPrivacyUrl}`);
   return { id: item.id, to: item.recipient.email, subject: payload.text, text: lines.filter(Boolean).join(String.fromCharCode(10, 10)), method: payload.method,

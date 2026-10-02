@@ -26,6 +26,8 @@ model User {
   accounts      Account[]
   advisorProfile AdvisorProfile?
   canManageOwnServices Boolean @default(false)
+  securityGeneration Int @default(0)
+  passwordMutationPending Boolean @default(false)
   internalAppointmentReceipts InternalAppointmentReceipt[]
 }
 
@@ -36,6 +38,7 @@ model Session {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   lastActivityAt DateTime @default(now())
+  securityGeneration Int @default(0)
   ipAddress      String?
   userAgent      String?
   userId         String

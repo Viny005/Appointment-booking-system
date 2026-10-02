@@ -16,6 +16,8 @@ Der [Kundenverwaltungs-Sprint](docs/CUSTOMER-MANAGEMENT-SPRINT.md) ergaenzt Capa
 
 Der [interne Termin-Sprint](docs/INTERNAL-APPOINTMENT-SPRINT.md) ergaenzt autorisierte Kalenderdaten und Verwaltungs-Use-Cases einschliesslich Gaesten, Resend und Ergebnissen.
 
+Der [Audit-/Retention-/Security-Sprint](docs/AUDIT-RETENTION-SECURITY-SPRINT.md) ergaenzt Audit, Aufbewahrung, Rate Limits und HTTP-Sicherheitsgrenzen. Der [interne Admin-Foundation-Sprint](docs/INTERNAL-ADMIN-FOUNDATION-SPRINT.md) ergaenzt Login, geschuetztes Rollenrouting, Benutzer-/Rollenbasis, Sessionwiderruf und Einmal-Passwortreset.
+
 ## Dokumentation
 
 | Einstieg | Inhalt |
@@ -36,7 +38,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Dokumentation und Foundation sind gemergt. Änderungen dieses Sprints erfolgen auf `feat/audit-retention-security`. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Dokumentation und Foundation sind gemergt. Die aktuelle gestapelte Entwicklung erfolgt auf `feat/internal-admin-foundation`; die vorherigen Sprint-PRs bleiben bis zur Integrationsreview ungemergt. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
 
 ## Lokal starten
 
@@ -70,9 +72,9 @@ POSIX: `NODE_ENV=development SEED_ADMIN_PASSWORD='<eigenes zufälliges lokales P
 
 ## Auth-Basis
 
-Noch keine Login-/Admin-Oberfläche. Anmeldung über `POST /api/auth/sign-in/email` mit JSON-Feldern email/password; Origin muss zu `BETTER_AUTH_URL` passen. Sessioncookie behalten. `GET /api/auth/get-session` liefert ausschließlich interne ID/Rolle oder HTTP 401/null. `POST /api/auth/sign-out` meldet ab. Better Auth prüft Origin/CSRF; Registrierung und alle anderen Auth-Mutationen sind nicht geroutet.
+Interne Nutzer melden sich unter `/login` mit E-Mail/Passwort an. `/internal` ist serverseitig geschützt und routet ADMIN bzw. ADVISOR in getrennte Einstiegsbereiche. `POST /api/auth/sign-out` widerruft die Sitzung. Öffentliche Registrierung, Kundenkonten und Browser-gesteuerte Rollenfelder bleiben gesperrt.
 
-Sessions liegen in PostgreSQL ohne Cookiecache. Gemeinsamer Server-Guard prüft Kontostatus, exakt 30 Minuten Idle und acht Stunden absolut. Hintergrundabfragen verlängern keine Sitzung; spätere explizite Nutzeraktionen verwenden die Aktivitätsmarkierung des Guards. Kein Kundenkonto. Ownership, Kontoverwaltung, Reset-Mailversand und Sicherheitsgeneration folgen später; zugehörige Endpunkte bleiben gesperrt.
+Sessions liegen in PostgreSQL ohne Cookiecache. Der gemeinsame Guard prüft Kontostatus, Sicherheitsgeneration, Passwortmutationsstatus, exakt 30 Minuten Idle und acht Stunden absolut. Deaktivierung und Rollenwechsel widerrufen Sitzungen. `/forgot-password` und `/reset-password` verwenden einen allgemeinen, 30 Minuten gültigen Einmalablauf; Resetlinks liegen nur kurzlebig verschlüsselt in der Outbox und erfolgreicher Reset widerruft Sitzungen sowie weitere Resetnachweise. Details: [Admin-Foundation-Sprint](docs/INTERNAL-ADMIN-FOUNDATION-SPRINT.md).
 
 ## Tests und Build
 
