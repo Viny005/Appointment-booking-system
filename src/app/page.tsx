@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { publicCatalog } from "@/shared/web/profile-catalog";
 import styles from "./home.module.css";
+import { Faq } from "./faq";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ export default async function Home(){
       <Link className={styles.brand} href="/">Terminverwaltung</Link>
       <nav aria-label="Hauptnavigation">
         <a href="#beratung">Beratung</a>
+        <a href="#ablauf">Ablauf</a>
+        <a href="#faq">FAQ</a>
         <Link href="/book">Termin buchen</Link>
       </nav>
     </header>
@@ -54,6 +57,22 @@ export default async function Home(){
         })}
       </div>:<div className={styles.empty}><h3>Aktuell keine öffentliche Beratung verfügbar</h3><p>Sobald ein vollständiges Profil aktiviert ist, wird es hier angezeigt.</p></div>}
     </section>
+
+    <section id="ablauf" className={styles.process}>
+      <div className={styles.sectionIntro}>
+        <p className={styles.eyebrow}>So funktioniert es</p>
+        <h2>Von der Auswahl bis zum Termin</h2>
+        <p>Der Ablauf bleibt transparent: erst Ansprechperson und Thema, dann nur tatsächlich verfügbare Termine.</p>
+      </div>
+      <div className={styles.processGrid}>
+        <article><span>01</span><h3>Anliegen wählen</h3><p>Wählen Sie Berater und Gesprächsthema passend zu Ihrem Bedarf.</p></article>
+        <article><span>02</span><h3>Verfügbarkeit sehen</h3><p>Nicht buchbare Tage sind bereits gesperrt; freie Uhrzeiten werden live berechnet.</p></article>
+        <article><span>03</span><h3>Termin bestätigen</h3><p>Kontaktdaten werden erst am Ende des Buchungsprozesses abgefragt.</p></article>
+        <article><span>04</span><h3>Termin verwalten</h3><p>Änderungen oder Absagen erfolgen über den persönlichen Link aus der Bestätigung.</p></article>
+      </div>
+    </section>
+
+    <div id="faq"><Faq /></div>
 
     <section className={styles.values}>
       <article><strong>Nur verfügbare Tage</strong><p>Im Kalender sind nicht buchbare Tage bereits gesperrt.</p></article>

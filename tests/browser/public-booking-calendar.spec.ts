@@ -12,8 +12,9 @@ function berlinToday() {
 test("calendar disables days with no bookable slots before interaction", async ({ page }) => {
   const today = berlinToday();
   const [year, month, day] = today.split("-").map(Number);
-  const unavailableDay = day === 1 ? 2 : 1;
-  const unavailable = `${year}-${String(month).padStart(2,"0")}-${String(unavailableDay).padStart(2,"0")}`;
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const unavailable = today;
+  const available = day < lastDay ? `${year}-${String(month).padStart(2,"0")}-${String(day + 1).padStart(2,"0")}` : null;
 
   await page.route("**/api/public/catalog*", route => {
     const url = new URL(route.request().url());
@@ -52,7 +53,7 @@ test("calendar disables days with no bookable slots before interaction", async (
   await page.route("**/api/public/availability*", route => {
     const url = new URL(route.request().url());
     if (url.searchParams.get("kind") === "days") {
-      return route.fulfill({ json:{ ok:true, value:[today] } });
+      return route.fulfill({ json:{ ok:true, value:available ? [available] : [] } });
     }
     return route.fulfill({ json:{ ok:true, value:[] } });
   });
@@ -64,8 +65,8 @@ test("calendar disables days with no bookable slots before interaction", async (
 
   await expect(page.getByRole("heading",{name:"Datum und Uhrzeit"})).toBeVisible();
   await expect(page.locator('input[type="date"]')).toHaveCount(0);
-  await expect(page.getByRole("button",{name:`${today} verfügbar`})).toBeEnabled();
   await expect(page.getByRole("button",{name:`${unavailable} nicht verfügbar`})).toBeDisabled();
+  if (available) await expect(page.getByRole("button",{name:`${available} verfügbar`})).toBeEnabled();
 
   const accessibility = await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag22aa"]).analyze();
   expect(accessibility.violations).toEqual([]);

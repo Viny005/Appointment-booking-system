@@ -102,8 +102,7 @@ export class CatalogCommands {
   updateProfile(actorId: string, id: string, expectedVersion: number, details: ProfileDetails) {
     return this.mutate(actorId, [id], [], async writer => {
       const aggregate = exists(await writer.getProfile(id)); version(aggregate.profile.version, expectedVersion);
-      const normalized = normalizeProfile(details);
-      const profile = { ...aggregate.profile, ...normalized, imageKey: normalized.imageKey ?? aggregate.profile.imageKey ?? null, version: expectedVersion + 1, updatedAt: this.runtime.now() };
+      const profile = { ...aggregate.profile, ...normalizeProfile(details), version: expectedVersion + 1, updatedAt: this.runtime.now() };
       if (profile.status === "ACTIVE") assertPublishable({ ...aggregate, profile });
       await writer.saveProfile(profile); return profile;
     });

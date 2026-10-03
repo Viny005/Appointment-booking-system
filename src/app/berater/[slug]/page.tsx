@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { publicCatalog } from "@/shared/web/profile-catalog";
 import { DVAG_PARTNERS, DVAG_PARTNER_SOURCE } from "@/content/dvag-partners";
 import styles from "./advisor.module.css";
+import { Faq } from "../../faq";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function AdvisorPage({ params }: { params: Promise<{ slug: 
           <a href="#beratung">Beratung</a>
           <a href="#ueber-mich">Über mich</a>
           <a href="#kontakt">Kontakt</a>
+          <a href="#faq">FAQ</a>
           {advisor.showDvagPartners&&<a href="#partner">Netzwerk</a>}
         </nav>
         <Link className={styles.headerCta} href={bookingHref}>Termin buchen</Link>
@@ -103,6 +105,8 @@ export default async function AdvisorPage({ params }: { params: Promise<{ slug: 
           <a className={styles.button+" "+styles.secondary} href={vcardHref}>vCard herunterladen</a>
         </div>}
       </section>
+      <div id="faq"><Faq title="Fragen vor dem Termin" /></div>
+
       {advisor.showDvagPartners&&<section id="partner" className={styles.section+" "+styles.partnerSection}>
         <div className={styles.sectionIntro}>
           <p className={styles.kicker}>Netzwerk</p>

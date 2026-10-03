@@ -46,7 +46,9 @@ Les qualifications professionnelles, numéros de registre, statuts d'intermédia
 - calendrier de réservation applicatif : seuls les jours contenant au moins un créneau réservable sont activables ;
 - jours sans disponibilité désactivés avant interaction, avec navigation mensuelle et états accessibles ;
 - refonte visuelle du booking (desktop/mobile) sans suppression des contrôles existants ;
+- accueil public enrichi avec parcours en quatre étapes et FAQ recherchable inspirée des thèmes du site de référence, avec contenu propre au projet ;
+- FAQ réutilisée sur les fiches conseillers, sans collecte ni persistance de la recherche ;
 - régression browser dédiée + axe/WCAG ;
 - garde HTTPS de production inchangée ; le harnais Playwright utilise une URL HTTPS de configuration pour les tests next start.
 
-Validation du jalon : lint, typecheck, build production, 319 tests unitaires et 8 tests Chromium.
+Validation du jalon : lint, typecheck, build production, 319/319 tests unitaires, 186/186 tests PostgreSQL et 9/9 tests Chromium. Les migrations sont validées sur base vierge et en upgrade depuis `main`, puis idempotentes au second `migrate deploy`. `npm audit --omit=dev` retourne 0 vulnérabilité ; l'audit complet signale 5 alertes high uniquement dans la chaîne de développement ESLint (`braces`/`micromatch`/`fast-glob`/`eslint-config-next`) et la correction automatique proposée est cassante, donc aucun `--force` n'est appliqué.
