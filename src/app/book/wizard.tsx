@@ -63,6 +63,7 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
  const [options,setOptions]=useState<any>(null);
  const [slots,setSlots]=useState<Slot[]>([]);
  const [draft,setDraft]=useState<Draft|null>(null);
+ const draftRef=useRef<Draft|null>(null);
  const [review,setReview]=useState<any>(null);
  const [error,setError]=useState("");
  const [busy,setBusy]=useState(false);
@@ -78,7 +79,7 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
    Promise.all([
      json("/api/public/catalog"),
      fetch("/api/booking/draft").then(async r=>r.ok?(await r.json()).value:null),
-   ]).then(([p,d])=>{setProfiles(p);if(d)setDraft(d);setLoaded(true)})
+   ]).then(([p,d])=>{setProfiles(p);if(d){draftRef.current=d;setDraft(d)}setLoaded(true)})
      .catch(e=>{setError(e.message);setLoaded(true)});
  },[]);
  useEffect(()=>{
@@ -88,12 +89,16 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
    }
  },[loaded,initialProfileId,profiles]);
 
- useEffect(()=>{primaryRef.current=primary});
+ function rememberDraft(value:Draft){
+   draftRef.current=value;
+   setDraft(value);
+   return value;
+ }
 
  async function ensureDraft(){
-   if(draft)return draft;
+   if(draftRef.current)return draftRef.current;
    const d=await json("/api/booking/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"create"})});
-   setDraft(d);return d;
+   return rememberDraft(d);
  }
 
  async function change(command:any){
@@ -101,7 +106,7 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
    try{
      const d=await ensureDraft();
      const n=await json("/api/booking/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"change",version:d.version,command})});
-     setDraft(n);return n;
+     return rememberDraft(n);
    }catch(e:any){setError(e.message);throw e}
    finally{setBusy(false)}
  }
@@ -115,6 +120,8 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
      setServices(s);setOptions(o);setStep(1);
    }catch{}
  }
+
+ useEffect(()=>{primaryRef.current=primary});
 
  async function service(id:string){
    try{
@@ -172,16 +179,17 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
      const guests=String(fd.get("guests")??"").split(",").map(x=>x.trim()).filter(Boolean);
      if(guests.length)d=await change({type:"guests",guests});
      const x=await json("/api/booking/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"review"})});
-     setReview(x);setDraft(d);setStep(6);
+     setReview(x);rememberDraft(d);setStep(6);
    }catch{}
  }
 
  async function confirm(){
-   if(!review||!draft)return;
+   const current=draftRef.current;
+   if(!review||!current)return;
    setBusy(true);setError("");
    try{
      const x=await json("/api/booking/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
-       action:"confirm",version:draft.version,payloadHash:review.payloadHash,commandKey:crypto.randomUUID().replaceAll("-",""),
+       action:"confirm",version:current.version,payloadHash:review.payloadHash,commandKey:crypto.randomUUID().replaceAll("-",""),
      })});
      setSuccess(x);
    }catch(e:any){setError(e.message)}
