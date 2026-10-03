@@ -38,3 +38,13 @@ it("retains hidden mandatory participants separately from selectable options", a
   expect(result).toMatchObject({ ok: true, value: { options: [], requiredParticipants: [{ id: "p2" }] } });
 });
 it("preserves default/removable flags", async () => expect(await catalog([primary, secondary], [relation({ defaultSelected: true })]).useCases.resolveParticipantOptions("p1")).toMatchObject({ ok: true, value: { options: [{ defaultSelected: true, clientCanRemove: true }] } }));
+it("resolves a public advisor page by slug without internal notification data", async () => {
+  const target = { profile: profile({ publicSlug: "test-advisor", aboutText: "About", publicEmail: "public@example.test", publicPhone: "+49 6000 123", publicWebsite: "https://example.test", publicAddress: "Musterweg 1", accentColor: "#1F5F8B", showDvagPartners: true, digitalCardEnabled: true }), services: [service()] };
+  const result = await catalog([target]).useCases.getPublicAdvisorBySlug("TEST-ADVISOR");
+  expect(result).toMatchObject({ ok: true, value: { publicSlug: "test-advisor", publicEmail: "public@example.test", services: [{ id: "s1" }] } });
+  expect(JSON.stringify(result)).not.toContain("notificationEmail");
+});
+it("does not publish inactive or unknown advisor slugs", async () => {
+  expect(await catalog([{ ...primary, profile: profile({ publicSlug: "hidden", status: "INACTIVE" }) }]).useCases.getPublicAdvisorBySlug("hidden")).toEqual({ ok: true, value: null });
+  expect(await catalog([primary]).useCases.getPublicAdvisorBySlug("missing")).toEqual({ ok: true, value: null });
+});

@@ -7,6 +7,14 @@ export type ProfileDetails = {
 };
 export type AdvisorProfile = ProfileDetails & {
   id: string; status: ProfileStatus; userId: string | null; version: number; createdAt: Date; updatedAt: Date;
+  publicSlug?: string | null; aboutText?: string | null; publicEmail?: string | null; publicPhone?: string | null;
+  publicWebsite?: string | null; publicAddress?: string | null; accentColor?: string | null;
+  showDvagPartners?: boolean; digitalCardEnabled?: boolean;
+};
+export type PublicAdvisorPresence = {
+  publicSlug: string | null; aboutText: string | null; publicEmail: string | null; publicPhone: string | null;
+  publicWebsite: string | null; publicAddress: string | null; accentColor: string | null;
+  showDvagPartners: boolean; digitalCardEnabled: boolean;
 };
 export type ServiceDetails = {
   name: string; description: string; durationMinutes: number;
@@ -23,7 +31,7 @@ export type ProfileRelation = RelationDetails & {
   id: string; sourceProfileId: string; targetProfileId: string; version: number; createdAt: Date; updatedAt: Date;
 };
 export type ProfileAggregate = { profile: AdvisorProfile; services: Service[] };
-export type PublicProfile = Pick<AdvisorProfile, "id" | "name" | "title" | "shortDescription" | "imageKey">;
+export type PublicProfile = Pick<AdvisorProfile, "id" | "name" | "title" | "shortDescription" | "imageKey"> & { publicSlug: string | null };
 export function publicProfile(profile: AdvisorProfile): PublicProfile {
-  return { id: profile.id, name: profile.name, title: profile.title, shortDescription: profile.shortDescription, imageKey: profile.imageKey };
+  return { id: profile.id, name: profile.name, title: profile.title, shortDescription: profile.shortDescription, imageKey: profile.imageKey, publicSlug: profile.publicSlug ?? null };
 }
