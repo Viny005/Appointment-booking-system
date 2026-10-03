@@ -31,7 +31,7 @@ export type ProfileRelation = RelationDetails & {
   id: string; sourceProfileId: string; targetProfileId: string; version: number; createdAt: Date; updatedAt: Date;
 };
 export type ProfileAggregate = { profile: AdvisorProfile; services: Service[] };
-export type PublicProfile = Pick<AdvisorProfile, "id" | "name" | "title" | "shortDescription" | "imageKey">;
+export type PublicProfile = Pick<AdvisorProfile, "id" | "name" | "title" | "shortDescription" | "imageKey"> & { publicSlug: string | null };
 export function publicProfile(profile: AdvisorProfile): PublicProfile {
-  return { id: profile.id, name: profile.name, title: profile.title, shortDescription: profile.shortDescription, imageKey: profile.imageKey };
+  return { id: profile.id, name: profile.name, title: profile.title, shortDescription: profile.shortDescription, imageKey: profile.imageKey, publicSlug: profile.publicSlug ?? null };
 }
