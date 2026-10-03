@@ -105,6 +105,15 @@ model AdvisorProfile {
   shortDescription  String @default("")
   notificationEmail String @default("")
   imageKey          String?
+  publicSlug        String? @unique
+  aboutText         String?
+  publicEmail       String?
+  publicPhone       String?
+  publicWebsite     String?
+  publicAddress     String?
+  accentColor       String?
+  showDvagPartners  Boolean @default(true)
+  digitalCardEnabled Boolean @default(true)
   status            ProfileStatus @default(DRAFT)
   userId            String? @unique
   user              User? @relation(fields: [userId], references: [id], onDelete: Restrict)

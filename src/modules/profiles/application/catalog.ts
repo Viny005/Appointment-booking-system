@@ -1,6 +1,6 @@
 import { CatalogError, type Result } from "../domain/errors";
-import { publicProfile, type ProfileDetails, type ServiceDetails, type RelationDetails, type PublicProfile, type ProfileAggregate } from "../domain/model";
-import { assertPublishable, assertServiceChange, createProfile, isValidActiveService, normalizeProfile, normalizeService, relationFlags, transitionProfile, validateRelation, validateService } from "../domain/policies";
+import { publicProfile, type ProfileDetails, type ServiceDetails, type RelationDetails, type PublicProfile, type ProfileAggregate, type PublicAdvisorPresence } from "../domain/model";
+import { assertPublishable, assertServiceChange, createProfile, isValidActiveService, normalizeProfile, normalizePublicAdvisorPresence, normalizeService, relationFlags, transitionProfile, validateRelation, validateService } from "../domain/policies";
 import type { CatalogRepository, CatalogRuntime, CatalogWriter } from "./ports";
 
 async function result<T>(work: () => Promise<T>): Promise<Result<T>> {
@@ -33,6 +33,30 @@ export class PublicCatalog {
         id: service.id, advisorProfileId: service.advisorProfileId, name: service.name, description: service.description,
         durationMinutes: service.durationMinutes, meetingModePolicy: service.meetingModePolicy, allowedMeetingModes: [...service.allowedMeetingModes],
       })); // Meeting secrets and internal profile contact/account data are never public catalog fields.
+    }));
+  }
+  getPublicAdvisorBySlug(slug: string) {
+    return result(() => this.repository.read(async reader => {
+      const normalized = slug.trim().toLowerCase();
+      const aggregate = (await reader.listProfiles()).find(item => item.profile.publicSlug === normalized);
+      if (!aggregate || !bookable(aggregate)) return null;
+      const p = aggregate.profile;
+      return {
+        profile: publicProfile(p),
+        publicSlug: p.publicSlug ?? null,
+        aboutText: p.aboutText ?? null,
+        publicEmail: p.publicEmail ?? null,
+        publicPhone: p.publicPhone ?? null,
+        publicWebsite: p.publicWebsite ?? null,
+        publicAddress: p.publicAddress ?? null,
+        accentColor: p.accentColor ?? null,
+        showDvagPartners: p.showDvagPartners ?? true,
+        digitalCardEnabled: p.digitalCardEnabled ?? true,
+        services: aggregate.services.filter(isValidActiveService).map(service => ({
+          id: service.id, name: service.name, description: service.description, durationMinutes: service.durationMinutes,
+          allowedMeetingModes: [...service.allowedMeetingModes],
+        })),
+      };
     }));
   }
   resolveParticipantOptions(profileId: string) {
@@ -78,10 +102,18 @@ export class CatalogCommands {
   updateProfile(actorId: string, id: string, expectedVersion: number, details: ProfileDetails) {
     return this.mutate(actorId, [id], [], async writer => {
       const aggregate = exists(await writer.getProfile(id)); version(aggregate.profile.version, expectedVersion);
-      const profile = { ...aggregate.profile, ...normalizeProfile(details), version: expectedVersion + 1, updatedAt: this.runtime.now() };
+      const normalized = normalizeProfile(details);
+      const profile = { ...aggregate.profile, ...normalized, imageKey: normalized.imageKey ?? aggregate.profile.imageKey ?? null, version: expectedVersion + 1, updatedAt: this.runtime.now() };
       if (profile.status === "ACTIVE") assertPublishable({ ...aggregate, profile });
       await writer.saveProfile(profile); return profile;
     });
+  }
+  updatePublicPresence(actorId: string, id: string, expectedVersion: number, details: PublicAdvisorPresence) {
+    return this.mutate(actorId, [id], [], async writer => {
+      const aggregate = exists(await writer.getProfile(id)); version(aggregate.profile.version, expectedVersion);
+      const profile = { ...aggregate.profile, ...normalizePublicAdvisorPresence(details), version: expectedVersion + 1, updatedAt: this.runtime.now() };
+      await writer.saveProfile(profile); return profile;
+    }, id);
   }
   setProfileStatus(actorId: string, id: string, expectedVersion: number, status: "ACTIVE" | "INACTIVE") {
     return this.mutate(actorId, [id], [], async writer => {

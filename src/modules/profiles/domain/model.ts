@@ -7,6 +7,14 @@ export type ProfileDetails = {
 };
 export type AdvisorProfile = ProfileDetails & {
   id: string; status: ProfileStatus; userId: string | null; version: number; createdAt: Date; updatedAt: Date;
+  publicSlug?: string | null; aboutText?: string | null; publicEmail?: string | null; publicPhone?: string | null;
+  publicWebsite?: string | null; publicAddress?: string | null; accentColor?: string | null;
+  showDvagPartners?: boolean; digitalCardEnabled?: boolean;
+};
+export type PublicAdvisorPresence = {
+  publicSlug: string | null; aboutText: string | null; publicEmail: string | null; publicPhone: string | null;
+  publicWebsite: string | null; publicAddress: string | null; accentColor: string | null;
+  showDvagPartners: boolean; digitalCardEnabled: boolean;
 };
 export type ServiceDetails = {
   name: string; description: string; durationMinutes: number;

@@ -1,5 +1,5 @@
 import { CatalogError, requireRule } from "./errors";
-import type { AdvisorProfile, MeetingMode, ProfileAggregate, ProfileDetails, ProfileRelation, ProfileStatus, Service, ServiceDetails } from "./model";
+import type { AdvisorProfile, MeetingMode, ProfileAggregate, ProfileDetails, ProfileRelation, ProfileStatus, PublicAdvisorPresence, Service, ServiceDetails } from "./model";
 
 const text = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 const modes: MeetingMode[] = ["IN_PERSON", "PHONE", "ONLINE"];
@@ -13,6 +13,40 @@ export function normalizeProfile(input: ProfileDetails): ProfileDetails {
   const at = email.lastIndexOf("@");
   return { name: input.name.trim(), title: input.title.trim(), shortDescription: input.shortDescription.trim(),
     notificationEmail: email ? email.slice(0, at) + "@" + email.slice(at + 1).toLowerCase() : "", imageKey };
+}
+export function normalizePublicAdvisorPresence(input: PublicAdvisorPresence): PublicAdvisorPresence {
+  const optionalText = (value: string | null, field: string, max: number) => {
+    requireRule(value === null || typeof value === "string", "Text oder null erwartet.", field);
+    const normalized = value?.trim() || null;
+    requireRule(!normalized || normalized.length <= max, `Maximal ${max} Zeichen erlaubt.`, field);
+    return normalized;
+  };
+  const publicSlug = optionalText(input.publicSlug, "publicSlug", 64);
+  requireRule(!publicSlug || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(publicSlug), "Öffentlicher Link darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.", "publicSlug");
+  const publicEmail = optionalText(input.publicEmail, "publicEmail", 254);
+  requireRule(!publicEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(publicEmail), "Ungültige öffentliche E-Mail.", "publicEmail");
+  const publicPhone = optionalText(input.publicPhone, "publicPhone", 32);
+  requireRule(!publicPhone || (/^[+\d(). -]+$/.test(publicPhone) && /\d/.test(publicPhone)), "Ungültige öffentliche Telefonnummer.", "publicPhone");
+  const publicWebsite = optionalText(input.publicWebsite, "publicWebsite", 2048);
+  if (publicWebsite) {
+    let url: URL;
+    try { url = new URL(publicWebsite); } catch { throw new CatalogError("INVALID_INPUT", "Ungültige Website-URL.", "publicWebsite"); }
+    requireRule(url.protocol === "https:" && !!url.hostname && !url.username && !url.password, "Website muss eine HTTPS-URL ohne Zugangsdaten sein.", "publicWebsite");
+  }
+  const accentColor = optionalText(input.accentColor, "accentColor", 7);
+  requireRule(!accentColor || /^#[0-9A-Fa-f]{6}$/.test(accentColor), "Akzentfarbe muss im Format #RRGGBB angegeben werden.", "accentColor");
+  requireRule(typeof input.showDvagPartners === "boolean" && typeof input.digitalCardEnabled === "boolean", "Boolean erwartet.");
+  return {
+    publicSlug,
+    aboutText: optionalText(input.aboutText, "aboutText", 5000),
+    publicEmail,
+    publicPhone,
+    publicWebsite,
+    publicAddress: optionalText(input.publicAddress, "publicAddress", 1000),
+    accentColor,
+    showDvagPartners: input.showDvagPartners,
+    digitalCardEnabled: input.digitalCardEnabled,
+  };
 }
 export function createProfile(id: string, details: ProfileDetails, now: Date): AdvisorProfile {
   return { ...normalizeProfile(details), id, status: "DRAFT", userId: null, version: 0, createdAt: now, updatedAt: now };
