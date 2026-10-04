@@ -23,9 +23,13 @@ export type ServiceDetails = {
   phoneDirection: PhoneDirection; advisorPhone: string | null;
   onlineUrl: string | null; onlineProvider: string | null;
 };
-export type Service = ServiceDetails & {
-  id: string; advisorProfileId: string; active: boolean; version: number; createdAt: Date; updatedAt: Date;
+export type ServiceTemplate = ServiceDetails & {
+  id: string; version: number; createdAt: Date; updatedAt: Date;
 };
+export type Service = ServiceDetails & {
+  id: string; advisorProfileId: string; serviceTemplateId?: string | null; active: boolean; version: number; createdAt: Date; updatedAt: Date;
+};
+export type ServiceTemplateAggregate = { template: ServiceTemplate; profileServices: Service[] };
 export type RelationDetails = { active: boolean; proposedToClient: boolean; defaultSelected: boolean; clientCanRemove: boolean };
 export type ProfileRelation = RelationDetails & {
   id: string; sourceProfileId: string; targetProfileId: string; version: number; createdAt: Date; updatedAt: Date;

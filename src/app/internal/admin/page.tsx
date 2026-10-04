@@ -26,7 +26,8 @@ export default async function AdminHome({searchParams}:{searchParams:Promise<{up
       <h2>Schnellzugriff</h2>
       <div className={styles.grid}>
         <Link className={styles.card} href="/internal/appointments"><strong>Termine verwalten</strong><p>Tag, Woche, Monat, Details und Aktionen.</p></Link>
-        <Link className={styles.card} href="/internal/admin/catalog"><strong>Profile und Leistungen</strong><p>Katalog, Beziehungen und Verfügbarkeiten.</p></Link>
+        <Link className={styles.card} href="/internal/admin/catalog"><strong>Beraterprofile</strong><p>Profildaten, individuelle Leistungen, Beziehungen und Verfügbarkeiten.</p></Link>
+        <Link className={styles.card} href="/internal/admin/services"><strong>Leistungskatalog</strong><p>Zentrale Leistungen anlegen, bearbeiten, löschen und für Profile freischalten.</p></Link>
       </div>
     </section>
 

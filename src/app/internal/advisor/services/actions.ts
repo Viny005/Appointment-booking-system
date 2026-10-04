@@ -48,7 +48,7 @@ export async function advisorServicesAction(formData:FormData){
   let message:string|undefined;
 
   try{
-    if(op==="service-create"||op==="service-update"||op==="service-toggle"){
+    if(op==="service-create"||op==="service-update"||op==="service-toggle"||op==="service-delete"){
       if(!api.canManageOwnServices){
         message="Die Verwaltung eigener Leistungen ist für dieses Konto nicht freigegeben.";
       }else if(op==="service-create"){
@@ -56,6 +56,9 @@ export async function advisorServicesAction(formData:FormData){
         if(!result.ok)message=result.error.message;
       }else if(op==="service-update"){
         const result=await api.commands.updateService(api.actorId,profileId,String(formData.get("serviceId")??""),version,serviceDetails(formData));
+        if(!result.ok)message=result.error.message;
+      }else if(op==="service-delete"){
+        const result=await api.commands.deleteService(api.actorId,profileId,String(formData.get("serviceId")??""),version);
         if(!result.ok)message=result.error.message;
       }else{
         const result=await api.commands.setServiceActive(api.actorId,profileId,String(formData.get("serviceId")??""),version,String(formData.get("active"))==="true");

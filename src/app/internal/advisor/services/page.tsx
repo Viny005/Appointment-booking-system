@@ -66,16 +66,33 @@ export default async function AdvisorServices({searchParams}:{searchParams:Promi
       {!api.canManageOwnServices&&<p className={styles.empty}>Sie können die bestehenden Leistungen sehen, aber Änderungen müssen von der Administration freigegeben werden.</p>}
       <div className={styles.grid}>{services.map(service=><article className={styles.card} key={service.id}>
         <h3>{service.name}</h3>
-        <div className={styles.meta}><span>{service.active?"Aktiv":"Inaktiv"}</span><span>{service.durationMinutes} Minuten</span></div>
-        {api.canManageOwnServices?<form action={advisorServicesAction} className={styles.toolbar}>
-          <input type="hidden" name="operation" value="service-update"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
-          <ServiceFields service={service}/><button className={styles.button}>Leistung speichern</button>
-        </form>:<p>{service.description}</p>}
-        {api.canManageOwnServices&&<form action={advisorServicesAction}><input type="hidden" name="operation" value="service-toggle"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/><input type="hidden" name="active" value={String(!service.active)}/><button className={styles.button}>{service.active?"Deaktivieren":"Aktivieren"}</button></form>}
+        <div className={styles.meta}>
+          <span>{service.active?"Aktiv":"Inaktiv"}</span>
+          <span>{service.durationMinutes} Minuten</span>
+          <span>{service.serviceTemplateId?"Zentraler Leistungskatalog":"Individuell"}</span>
+        </div>
+        {service.serviceTemplateId?<>
+          <p>{service.description}</p>
+          <p className={styles.empty}>Diese Leistung wird zentral durch die Administration verwaltet. Inhalt und Freischaltung können hier nicht geändert werden.</p>
+        </>:api.canManageOwnServices?<>
+          <form action={advisorServicesAction} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-update"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
+            <ServiceFields service={service}/><button className={styles.button}>Leistung speichern</button>
+          </form>
+          <form action={advisorServicesAction}>
+            <input type="hidden" name="operation" value="service-toggle"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/><input type="hidden" name="active" value={String(!service.active)}/>
+            <button className={styles.button}>{service.active?"Deaktivieren":"Aktivieren"}</button>
+          </form>
+          <form action={advisorServicesAction} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-delete"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
+            <label><input type="checkbox" required/> Individuelle Leistung wirklich löschen</label>
+            <button className={styles.button}>Leistung löschen</button>
+          </form>
+        </>:<p>{service.description}</p>}
       </article>)}</div>
-      {api.canManageOwnServices&&<><h3>Neue Leistung</h3><form action={advisorServicesAction} className={styles.toolbar}>
-        <input type="hidden" name="operation" value="service-create"/><ServiceFields/><button className={styles.button}>Leistung anlegen</button>
-      </form><p className={styles.empty}>Neue Leistungen werden zunächst inaktiv angelegt und vor Aktivierung vollständig validiert.</p></>}
+      {api.canManageOwnServices&&<><h3>Neue individuelle Leistung</h3><form action={advisorServicesAction} className={styles.toolbar}>
+        <input type="hidden" name="operation" value="service-create"/><ServiceFields/><button className={styles.button}>Individuelle Leistung anlegen</button>
+      </form><p className={styles.empty}>Diese Leistung gehört nur zu Ihrem Profil. Zentrale Leistungen werden ausschließlich von der Administration freigeschaltet.</p></>}
     </section>
 
     <section className={styles.panel}>

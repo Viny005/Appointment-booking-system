@@ -83,6 +83,20 @@ export async function catalogAction(id:string,formData:FormData){
     }else if(op==="service-update"){
       const result=await api.commands.updateService(api.actorId,id,String(formData.get("serviceId")??""),version,serviceDetails(formData));
       if(!result.ok)message=result.error.message;
+    }else if(op==="service-delete"){
+      const result=await api.commands.deleteService(api.actorId,id,String(formData.get("serviceId")??""),version);
+      if(!result.ok)message=result.error.message;
+    }else if(op==="template-profile-toggle"){
+      const rawServiceVersion=String(formData.get("serviceVersion")??"").trim();
+      const result=await api.commands.setServiceTemplateForProfile(
+        api.actorId,
+        String(formData.get("templateId")??""),
+        Number(formData.get("templateVersion")),
+        id,
+        rawServiceVersion===""?null:Number(rawServiceVersion),
+        String(formData.get("active"))==="true",
+      );
+      if(!result.ok)message=result.error.message;
     }else if(op==="relation-create"){
       const result=await api.commands.createRelation(api.actorId,id,String(formData.get("targetId")??""),{
         active:true,
