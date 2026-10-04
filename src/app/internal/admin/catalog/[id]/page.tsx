@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { internalCatalog } from "@/shared/web/profile-catalog";
 import { internalAvailability } from "@/shared/web/availability";
 import { internalAdminService } from "@/shared/web/internal-admin";
-import type { Service } from "@/modules/profiles/domain/model";
+import { ServiceFieldsEditor } from "@/app/internal/service-fields-editor";
 import { catalogAction } from "./actions";
 import { uploadProfileImage } from "./image-action";
 import styles from "../../../internal.module.css";
@@ -14,27 +14,6 @@ export const dynamic="force-dynamic";
 const dayNames=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 const clock=(value:number)=>value===1440?"24:00":String(Math.floor(value/60)).padStart(2,"0")+":"+String(value%60).padStart(2,"0");
 const rangeText=(ranges:{start:number;end:number}[])=>ranges.map(r=>clock(r.start)+"-"+clock(r.end)).join(", ");
-
-function ServiceFields({service}:{service?:Service}){
-  const has=(mode:"IN_PERSON"|"PHONE"|"ONLINE")=>service?.allowedMeetingModes.includes(mode)??mode==="IN_PERSON";
-  return <>
-    <label className={styles.field}>Name<input name="name" defaultValue={service?.name??""} required/></label>
-    <label className={styles.field}>Beschreibung<input name="description" defaultValue={service?.description??""} required/></label>
-    <label className={styles.field}>Dauer (Minuten)<input name="duration" type="number" min="15" max="480" step="15" defaultValue={service?.durationMinutes??60} required/></label>
-    <label className={styles.field}>Modus-Regel<select name="policy" defaultValue={service?.meetingModePolicy??"CLIENT_CHOICE"}><option value="CLIENT_CHOICE">Kunde wählt</option><option value="FIXED">Fester Modus</option></select></label>
-    <fieldset className={styles.field}><legend>Erlaubte Terminarten</legend>
-      <label><input name="mode_IN_PERSON" type="checkbox" defaultChecked={has("IN_PERSON")}/> Vor Ort</label>
-      <label><input name="mode_PHONE" type="checkbox" defaultChecked={has("PHONE")}/> Telefon</label>
-      <label><input name="mode_ONLINE" type="checkbox" defaultChecked={has("ONLINE")}/> Online</label>
-    </fieldset>
-    <label className={styles.field}>Ort (für Vor-Ort-Termine)<input name="placeName" defaultValue={service?.placeName??""}/></label>
-    <label className={styles.field}>Adresse (für Vor-Ort-Termine)<input name="address" defaultValue={service?.visitAddress??""}/></label>
-    <label className={styles.field}>Telefonrichtung<select name="phoneDirection" defaultValue={service?.phoneDirection??"ADVISOR_CALLS_CLIENT"}><option value="ADVISOR_CALLS_CLIENT">Berater ruft Kunden an</option><option value="CLIENT_CALLS_ADVISOR">Kunde ruft Berater an</option></select></label>
-    <label className={styles.field}>Berater-Telefon (wenn Kunde anruft)<input name="advisorPhone" type="tel" defaultValue={service?.advisorPhone??""}/></label>
-    <label className={styles.field}>Online-Anbieter<input name="onlineProvider" defaultValue={service?.onlineProvider??""} placeholder="z. B. Microsoft Teams"/></label>
-    <label className={styles.field}>Online-Link<input name="onlineUrl" type="url" defaultValue={service?.onlineUrl??""} placeholder="https://..."/></label>
-  </>;
-}
 
 export default async function ProfileManagement({params,searchParams}:{params:Promise<{id:string}>,searchParams:Promise<{updated?:string,error?:string}>}){
   const {id}=await params,q=await searchParams,api=await internalCatalog(await headers());
@@ -163,7 +142,7 @@ export default async function ProfileManagement({params,searchParams}:{params:Pr
             <input type="hidden" name="operation" value="service-update"/>
             <input type="hidden" name="serviceId" value={service.id}/>
             <input type="hidden" name="version" value={service.version}/>
-            <ServiceFields service={service}/>
+            <ServiceFieldsEditor value={service} operationalRequired={service.active} defaultMode="IN_PERSON"/>
             <button className={styles.button}>Individuelle Leistung speichern</button>
           </form>
           <form action={action} className={styles.toolbar}>
@@ -200,7 +179,7 @@ export default async function ProfileManagement({params,searchParams}:{params:Pr
       <h3>Individuelle Leistung nur für dieses Profil anlegen</h3>
       <form action={action} className={styles.toolbar}>
         <input type="hidden" name="operation" value="service-create"/>
-        <ServiceFields/>
+        <ServiceFieldsEditor operationalRequired={false} defaultMode="IN_PERSON"/>
         <button className={styles.button}>Individuelle Leistung anlegen</button>
       </form>
       <p className={styles.empty}>Individuelle Leistungen gehören nur zu diesem Profil. Zentrale Leistungen werden stattdessen im Leistungskatalog angelegt.</p>

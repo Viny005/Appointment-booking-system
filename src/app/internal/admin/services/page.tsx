@@ -2,59 +2,12 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { internalCatalog } from "@/shared/web/profile-catalog";
-import type { ServiceDetails, ServiceTemplate } from "@/modules/profiles/domain/model";
+import type { ServiceDetails } from "@/modules/profiles/domain/model";
+import { ServiceFieldsEditor } from "@/app/internal/service-fields-editor";
 import { serviceCatalogAction } from "./actions";
 import styles from "../../internal.module.css";
 
 export const dynamic="force-dynamic";
-
-function ServiceFields({value}:{value?:ServiceTemplate}){
-  const checked=(mode:"IN_PERSON"|"PHONE"|"ONLINE")=>value?value.allowedMeetingModes.includes(mode):mode==="PHONE";
-  return <>
-    <label className={styles.field}>Name
-      <input name="name" defaultValue={value?.name??""} required maxLength={200}/>
-    </label>
-    <label className={styles.field}>Beschreibung
-      <textarea name="description" defaultValue={value?.description??""} required maxLength={3000}/>
-    </label>
-    <label className={styles.field}>Dauer (Minuten)
-      <input name="duration" type="number" min="1" max="480" step="1" defaultValue={value?.durationMinutes??60} required/>
-    </label>
-    <label className={styles.field}>Modus-Regel
-      <select name="policy" defaultValue={value?.meetingModePolicy??"CLIENT_CHOICE"}>
-        <option value="CLIENT_CHOICE">Kunde wählt</option>
-        <option value="FIXED">Fester Modus</option>
-      </select>
-    </label>
-    <fieldset className={styles.field}>
-      <legend>Erlaubte Terminarten</legend>
-      <label><input name="mode_IN_PERSON" type="checkbox" defaultChecked={checked("IN_PERSON")}/> Vor Ort</label>
-      <label><input name="mode_PHONE" type="checkbox" defaultChecked={checked("PHONE")}/> Telefon</label>
-      <label><input name="mode_ONLINE" type="checkbox" defaultChecked={checked("ONLINE")}/> Online</label>
-    </fieldset>
-    <label className={styles.field}>Ort (für Vor-Ort-Termine)
-      <input name="placeName" defaultValue={value?.placeName??""}/>
-    </label>
-    <label className={styles.field}>Adresse (für Vor-Ort-Termine)
-      <input name="address" defaultValue={value?.visitAddress??""}/>
-    </label>
-    <label className={styles.field}>Telefonrichtung
-      <select name="phoneDirection" defaultValue={value?.phoneDirection??"ADVISOR_CALLS_CLIENT"}>
-        <option value="ADVISOR_CALLS_CLIENT">Berater ruft Kunden an</option>
-        <option value="CLIENT_CALLS_ADVISOR">Kunde ruft Berater an</option>
-      </select>
-    </label>
-    <label className={styles.field}>Berater-Telefon (wenn Kunde anruft)
-      <input name="advisorPhone" type="tel" defaultValue={value?.advisorPhone??""}/>
-    </label>
-    <label className={styles.field}>Online-Anbieter
-      <input name="onlineProvider" defaultValue={value?.onlineProvider??""} placeholder="z. B. Microsoft Teams"/>
-    </label>
-    <label className={styles.field}>Online-Link
-      <input name="onlineUrl" type="url" defaultValue={value?.onlineUrl??""} placeholder="https://..."/>
-    </label>
-  </>;
-}
 
 function modeSummary(service:ServiceDetails){
   return service.allowedMeetingModes.map(mode=>mode==="IN_PERSON"?"Vor Ort":mode==="PHONE"?"Telefon":"Online").join(" · ");
@@ -98,7 +51,7 @@ export default async function ServiceCatalogPage({searchParams}:{searchParams:Pr
       <p>Die Leistung wird zunächst nur im globalen Katalog gespeichert. Danach entscheiden Sie pro Profil, ob sie freigeschaltet wird.</p>
       <form action={serviceCatalogAction} className={styles.toolbar}>
         <input type="hidden" name="operation" value="template-create"/>
-        <ServiceFields/>
+        <ServiceFieldsEditor operationalRequired={true} defaultMode="PHONE"/>
         <button className={styles.button}>Leistung im Katalog anlegen</button>
       </form>
     </section>
@@ -124,7 +77,7 @@ export default async function ServiceCatalogPage({searchParams}:{searchParams:Pr
               <input type="hidden" name="operation" value="template-update"/>
               <input type="hidden" name="templateId" value={template.id}/>
               <input type="hidden" name="templateVersion" value={template.version}/>
-              <ServiceFields value={template}/>
+              <ServiceFieldsEditor value={template} operationalRequired={true} defaultMode="PHONE"/>
               <button className={styles.button}>Zentrale Leistung speichern</button>
             </form>
             <p className={styles.empty}>Änderungen werden automatisch auf alle mit dieser Katalogleistung verbundenen Profil-Leistungen übertragen.</p>
