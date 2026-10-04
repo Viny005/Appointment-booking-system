@@ -6,17 +6,11 @@ Webanwendung zur Buchung und Verwaltung von Beratungsterminen. Kunden wählen oh
 
 ## Projektstatus
 
-Stand: 2026-09-30. Neben der [Foundation](docs/FOUNDATION.md) sind jetzt Domain, Application und Persistenz für Profile, Services und direkte Profilbeziehungen implementiert. Umfang und Nachweise: [Profil-/Service-Sprint](docs/PROFILE-SERVICE-SPRINT.md). Die [Availability Engine](docs/AVAILABILITY-SPRINT.md) ergänzt Wochenregeln, Ausnahmen, Schnittmengen und DST-sichere Slotberechnung. Der [Appointment Core](docs/APPOINTMENT-CORE-SPRINT.md) ergänzt atomare Reservierungen und persistierte Belegung. Die Verwaltungsoberflaechen folgen in eigenen Sprints.
+Stand: 2026-10-04. Die lokale Anwendung deckt den vollständigen Kernablauf ab: öffentliche Buchung ohne Kundenkonto, DST-sichere Verfügbarkeit, atomare Mehrberater-Reservierung, serverseitige Drafts, Notifications/ICS, sichere Kundenverwaltung, interne Terminverwaltung, Rollen-/Sessionverwaltung, Audit/Retention, Profilbilder sowie öffentliche Beraterseiten.
 
-Der [BookingDraft-Sprint](docs/BOOKING-DRAFT-SPRINT.md) ergaenzt serverseitige Entwuerfe und idempotente Bestaetigungsorchestrierung. Der oeffentliche Confirm-Endpunkt ist mit der atomaren Outbox-Integration verbunden.
+Der [Sprint 18](docs/SPRINT18-SERVICE-CATALOG.md) ergänzt einen zentralen Leistungskatalog: Administratoren können Leistungen unabhängig von Profilen anlegen, bearbeiten, löschen und profilweise freischalten/sperren; individuelle Profilleistungen bleiben parallel möglich. Historische Termine behalten ihre Leistungssnapshots.
 
-Der [Notification-Sprint](docs/NOTIFICATION-SPRINT.md) verbindet Bestaetigung und Outbox atomar und ergaenzt SMTP, ICS und den begrenzten Versandworker.
-
-Der [Kundenverwaltungs-Sprint](docs/CUSTOMER-MANAGEMENT-SPRINT.md) ergaenzt Capability-Zugriff, atomare Umbuchung und Absage sowie eine datensparsame Verwaltungsseite.
-
-Der [interne Termin-Sprint](docs/INTERNAL-APPOINTMENT-SPRINT.md) ergaenzt autorisierte Kalenderdaten und Verwaltungs-Use-Cases einschliesslich Gaesten, Resend und Ergebnissen.
-
-Der [Audit-/Retention-/Security-Sprint](docs/AUDIT-RETENTION-SECURITY-SPRINT.md) ergaenzt Audit, Aufbewahrung, Rate Limits und HTTP-Sicherheitsgrenzen. Der [interne Admin-Foundation-Sprint](docs/INTERNAL-ADMIN-FOUNDATION-SPRINT.md) ergaenzt Login, geschuetztes Rollenrouting, Benutzer-/Rollenbasis, Sessionwiderruf und Einmal-Passwortreset.
+Technische Produktionsgrenzen und noch ausstehende Betreiberentscheidungen sind ausdrücklich getrennt. Der providerneutrale [Deployment-Runbook](docs/PRODUCTION-DEPLOYMENT-RUNBOOK.md) und die [Entscheidungsmatrix](docs/PRODUCTION-DECISIONS.md) beschreiben den Weg von Staging bis Go-live. Eine technisch erfolgreiche lokale Abnahme ist keine rechtliche oder betriebliche Produktionsfreigabe.
 
 ## Dokumentation
 
@@ -38,7 +32,7 @@ Die deutsche Dokumentationssprache und Dateinamen der gelieferten Vorlage bleibe
 
 Fachliche Änderungen beginnen in `docs/spec/`; technische Entscheidungen folgen in `docs/arch/` und `adr/`. Stabile IDs werden nicht für andere Anforderungen wiederverwendet. Die Rückverfolgbarkeit wird im selben Commit aktualisiert. Dokumentationsprüfungen: `python tools/check_docs.py` und `git diff --check`. Der Prüfer benötigt nur Python 3 und ist kein Anwendungscode.
 
-Dokumentation und Foundation sind gemergt. Die aktuelle gestapelte Entwicklung erfolgt auf `feat/internal-admin-foundation`; die vorherigen Sprint-PRs bleiben bis zur Integrationsreview ungemergt. Eine Freigabe der Dokumentation ist keine Produktionsfreigabe.
+Die aktuelle lokale Vorbereitung der Produktionslaufzeit erfolgt auf `sprint19/production-runtime-preflight`, gestapelt auf dem lokal validierten Sprint 18. Sprint-Commits werden lokal validiert und erst nach manueller Abnahme/CI gepusht bzw. gemergt. Eine Freigabe der Dokumentation oder der lokalen Tests ist keine Produktionsfreigabe.
 
 ## Lokal starten
 
@@ -89,6 +83,14 @@ npm run build
 
 `npm start` startet den Produktionsbuild. Für produktive Auth muss BETTER_AUTH_URL HTTPS verwenden; lokale HTTP-Entwicklung nutzt `npm run dev`. Build und Unit-Tests benötigen weder Live-DB noch echte Secrets.
 
+## Staging und Produktion
+
+Das Repository enthält ein providerneutrales `Dockerfile`. Die Runtime läuft als unprivilegierter Benutzer und enthält die Produktionswerkzeuge für Prisma-Migrationen sowie die one-shot Notification-/Maintenance-Jobs. `PROFILE_IMAGE_DIR` muss in Produktion auf persistenten Speicher zeigen; das Docker-Image setzt absichtlich keinen stillen persistenten Default.
+
+Vor Staging: `npm run staging:preflight`. Vor Go-live: `npm run production:preflight`. Der strikte Produktionslauf prüft zusätzlich HTTPS, HSTS sowie explizite Privacy-/Retention-Freigaben. Der vollständige Ablauf steht im [Deployment-Runbook](docs/PRODUCTION-DEPLOYMENT-RUNBOOK.md); noch offene Provider-/Betreiberentscheidungen in [PRODUCTION-DECISIONS](docs/PRODUCTION-DECISIONS.md).
+
+Beispiel Build: `docker build -t appointment-booking:<version> .`. Secrets werden niemals in das Image kopiert, sondern erst zur Laufzeit über den Secret-Store der gewählten Plattform injiziert.
+
 DB-Tests benötigen eine separate `appointment_test`: `docker compose exec postgres createdb -U appointment appointment_test`. Beispiel PowerShell mit lokalen Beispielzugangsdaten:
 
 ```powershell
@@ -104,7 +106,7 @@ Unter POSIX beide Umgebungsvariablen entsprechend exportieren und nach dem Test 
 
 ## Struktur
 
-`src/app`: App Router. `src/modules/{booking,availability,profiles,appointments,identity,notifications}`: jeweils domain/application/infrastructure; Identity-Basis, Profiles, Availability, Appointment Core, Booking Draft, Notifications und Terminverwaltung sind implementiert; vollständige Kontoverwaltung und weitere Oberflächen folgen in eigenen Sprints. `src/shared`: gemeinsame Ports, DB-Infrastruktur und serverseitige Web-Komposition. Domain/Application importieren weder Next/React noch Prisma/Infrastruktur; ESLint schützt diese Grenze. `prisma`: Schema, additive Migrationen, Seed. `tests`: getrennte Unit- und echte DB-Integrationstests.
+`src/app`: App Router mit öffentlicher Buchung, Kundenverwaltung und internen Admin-/Advisor-Oberflächen. `src/modules/{booking,availability,profiles,appointments,identity,notifications}` trennen Domain/Application/Infrastruktur. `src/shared`: gemeinsame Ports, DB-Infrastruktur und serverseitige Web-Komposition. Domain/Application importieren weder Next/React noch Prisma/Infrastruktur; ESLint schützt diese Grenze. `prisma`: Schema, additive Migrationen und Development-Seed. `tests`: Unit-, PostgreSQL-Integration- und Browsertests.
 
 ## Implementierungsbereitschaft
 
