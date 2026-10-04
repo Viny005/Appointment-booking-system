@@ -23,9 +23,22 @@ test("production CSP has fresh nonces, working hydration and blocks injected scr
   expect(violations.length).toBeGreaterThan(0);
 });
 
+test("public rendered pages produce no unexpected CSP violations", async ({ page }) => {
+  const violations:string[]=[];
+  page.on("console",message=>{if(message.type()==="error"&&/content security policy/i.test(message.text()))violations.push(message.text())});
+  for(const path of ["/","/datenschutz","/impressum"]){
+    const response=await page.goto(path);
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading",{level:1})).toBeVisible();
+  }
+  expect(violations).toEqual([]);
+});
+
 test("internal routes redirect anonymous users to the semantic login form", async ({ page }) => {
-  await page.goto("/internal");
-  await expect(page).toHaveURL(/\/login$/);
+  for (const path of ["/internal","/internal/admin","/internal/admin/catalog","/internal/advisor","/internal/advisor/services","/internal/appointments"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/login$/);
+  }
   await expect(page.getByRole("heading", { name: "Interne Anmeldung" })).toBeVisible();
   await expect(page.getByLabel("E-Mail-Adresse")).toBeVisible();
   await expect(page.getByLabel("Passwort")).toBeVisible();

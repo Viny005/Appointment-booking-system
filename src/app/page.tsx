@@ -1,4 +1,4 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { publicCatalog } from "@/shared/web/profile-catalog";
 import styles from "./home.module.css";
@@ -49,7 +49,7 @@ export default async function Home(){
           const href=profile.publicSlug?"/berater/"+encodeURIComponent(profile.publicSlug):"/book?advisor="+encodeURIComponent(profile.id);
           return <article className={styles.card} key={profile.id}>
             <div className={styles.avatar}>
-              {profile.imageKey?<Image unoptimized src={"/api/profile-images/"+encodeURIComponent(profile.imageKey)} alt="" width={96} height={96}/>:<span aria-hidden="true">{profile.name.slice(0,1).toUpperCase()}</span>}
+              {profile.imageKey?<img src={"/api/profile-images/"+encodeURIComponent(profile.imageKey)} alt="" width={96} height={96} loading="lazy" decoding="async"/>:<span aria-hidden="true">{profile.name.slice(0,1).toUpperCase()}</span>}
             </div>
             <div><h3>{profile.name}</h3><p className={styles.role}>{profile.title}</p><p>{profile.shortDescription}</p></div>
             <Link href={href}>{profile.publicSlug?"Profil ansehen":"Termin auswählen"} <span aria-hidden="true">→</span></Link>

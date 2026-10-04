@@ -1,7 +1,7 @@
 export const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 export const ABSOLUTE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
 export type InternalRole = "ADMIN" | "ADVISOR";
-export type InternalIdentity = { id: string; role: InternalRole };
+export type InternalIdentity = { id: string; role: InternalRole; profileId: string | null; canManageOwnServices: boolean };
 export type SessionState = {
   createdAt: Date; lastActivityAt: Date; expiresAt: Date; active: boolean;
 };

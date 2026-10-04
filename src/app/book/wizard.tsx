@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import styles from "./booking.module.css";
 
@@ -191,16 +192,22 @@ export function BookingWizard({initialProfileId}:{initialProfileId?:string}){
      const x=await json("/api/booking/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
        action:"confirm",version:current.version,payloadHash:review.payloadHash,commandKey:crypto.randomUUID().replaceAll("-",""),
      })});
-     setSuccess(x);
+     draftRef.current=null;setDraft(null);setSuccess(x);
    }catch(e:any){setError(e.message)}
    finally{setBusy(false)}
+ }
+ function restart(){
+   draftRef.current=null;setDraft(null);setReview(null);setSuccess(null);setError("");setServices([]);setOptions(null);setSlots([]);setBookableDays([]);setStep(0);
  }
  if(success)return <section id="booking" className={styles.wizard} aria-live="polite">
    <div className={styles.successMark}>✓</div>
    <h2>Termin erfolgreich gebucht</h2>
-   <p>Ihre Terminbestätigung wird per E-Mail versendet.</p>
-   <p><strong>Terminnummer:</strong> {success.appointmentId}</p>
-   <p>Änderungen erfolgen über den sicheren Link in Ihrer Bestätigungs-E-Mail.</p>
+   <p>Ihre Terminbestätigung wird per E-Mail versendet. Darin befindet sich auch der sichere Link zum späteren Ändern oder Absagen.</p>
+   <dl className={styles.summary}>
+     <dt>Terminnummer</dt><dd>{success.appointmentId}</dd>
+     {review&&<><dt>Leistung</dt><dd>{review.service.name} · {review.service.durationMinutes} Minuten</dd><dt>Teilnehmende</dt><dd>{review.participants.map((x:any)=>x.name).join(", ")}</dd><dt>Termin</dt><dd>{new Intl.DateTimeFormat("de-DE",{dateStyle:"full",timeStyle:"short",timeZone:"Europe/Berlin"}).format(new Date(success.startUtc))}</dd><dt>Terminart</dt><dd>{review.payload.meetingMode==="IN_PERSON"?"Vor Ort":review.payload.meetingMode==="PHONE"?"Telefon":"Online"}</dd></>}
+   </dl>
+   <div className={styles.actions}><button type="button" className={styles.button} onClick={restart}>Neuen Termin buchen</button><Link className={styles.linkButton} href="/">Zur Startseite</Link></div>
  </section>;
 
  const p=draft?.payload;

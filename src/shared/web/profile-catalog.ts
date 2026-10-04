@@ -10,5 +10,5 @@ export function publicCatalog() { return new PublicCatalog(prismaCatalog(getData
 export async function internalCatalog(headers: Headers) {
   const identity = await getInternalSession(headers, true);
   if (!identity) return null;
-  const repository = prismaCatalog(getDatabase()); return { actorId: identity.id, role: identity.role, commands: new CatalogCommands(repository, { id: randomUUID, now: () => new Date() }), queries: new InternalCatalogQueries(repository) };
+  const repository = prismaCatalog(getDatabase()); return { actorId: identity.id, role: identity.role, profileId: identity.profileId, canManageOwnServices: identity.canManageOwnServices, commands: new CatalogCommands(repository, { id: randomUUID, now: () => new Date() }), queries: new InternalCatalogQueries(repository) };
 }

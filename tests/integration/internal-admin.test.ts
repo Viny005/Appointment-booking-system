@@ -30,6 +30,7 @@ it("revokes sessions and audits an administrative account change atomically", as
   expect(await db.session.count({ where: { userId: advisor } })).toBe(0);
   expect(await db.auditLog.count({ where: { actorId: admin, resource: "USER", resourceId: advisor, action: "USER_CHANGED" } })).toBe(1);
 });
+it("creates an advisor account and can grant own-service management", async () => { const admin = await user("ADMIN"), createdId=randomUUID(); ids.push(createdId); const service = new InternalAdmin(prismaAdminRepository(db), () => createdId, hashPassword); const created=await service.create(admin,{name:"New Advisor",email:`advisor-${createdId}@example.test`,role:"ADVISOR",initialPassword:"Sixteen-Characters-1!"}); if(!created.ok)throw new Error(JSON.stringify(created.error)); expect(created.ok).toBe(true); expect(created.value.active).toBe(true); expect(created.value.canManageOwnServices).toBe(false); const updated=await service.update(admin,createdId,{canManageOwnServices:true}); expect(updated.ok&&updated.value.canManageOwnServices).toBe(true); expect(await db.auditLog.count({where:{actorId:admin,resource:"USER",resourceId:createdId,action:"USER_CHANGED"}})).toBeGreaterThanOrEqual(2); });
 it("enforces nonnegative security generations in PostgreSQL", async () => {
   const advisor = await user("ADVISOR");
   await expect(db.user.update({ where: { id: advisor }, data: { securityGeneration: -1 } })).rejects.toThrow();

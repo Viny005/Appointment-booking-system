@@ -14,14 +14,15 @@ describe("session boundaries", () => {
   it("rejects inactive users", () => expect(isSessionUsable({ ...state, active: false }, now)).toBe(false));
   it("rejects expired library sessions", () => expect(isSessionUsable({ ...state, expiresAt: now }, now)).toBe(false));
   it("polling never touches activity; explicit actions do", async () => {
-    const store: SessionStore = { read: async () => ({ ...state, identity: { id: "internal-user", role: "ADMIN" } }), touchIfValid: vi.fn(async () => true) };
-    expect(await checkSession(store, "session", now)).toEqual({ id: "internal-user", role: "ADMIN" });
+    const identity = { id: "internal-user", role: "ADMIN" as const, profileId: "profile-1", canManageOwnServices: true };
+    const store: SessionStore = { read: async () => ({ ...state, identity }), touchIfValid: vi.fn(async () => true) };
+    expect(await checkSession(store, "session", now)).toEqual(identity);
     expect(store.touchIfValid).not.toHaveBeenCalled();
     await checkSession(store, "session", now, true);
     expect(store.touchIfValid).toHaveBeenCalledOnce();
   });
   it("fails closed when a session expires or is revoked during a touch", async () => {
-    const store: SessionStore = { read: async () => ({ ...state, identity: { id: "internal-user", role: "ADVISOR" } }), touchIfValid: async () => false };
+    const store: SessionStore = { read: async () => ({ ...state, identity: { id: "internal-user", role: "ADVISOR", profileId: null, canManageOwnServices: false } }), touchIfValid: async () => false };
     expect(await checkSession(store, "session", now, true)).toBeNull();
   });
   it("rejects missing sessions", async () => expect(await checkSession({ read: async () => null, touchIfValid: vi.fn() }, "missing", now)).toBeNull());

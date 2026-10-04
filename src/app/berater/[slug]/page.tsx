@@ -1,6 +1,6 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { publicCatalog } from "@/shared/web/profile-catalog";
 import { DVAG_PARTNERS, DVAG_PARTNER_SOURCE } from "@/content/dvag-partners";
@@ -17,11 +17,13 @@ export default async function AdvisorPage({ params }: { params: Promise<{ slug: 
   const advisor = result.value;
   const productPartners = DVAG_PARTNERS.filter(item => item.category === "PRODUCT_PARTNER");
   const cooperations = DVAG_PARTNERS.filter(item => item.category === "COOPERATION");
-  const accent = advisor.accentColor ?? "#1F5F8B";
+  const accent = /^#[0-9A-Fa-f]{6}$/.test(advisor.accentColor ?? "") ? advisor.accentColor! : "#1F5F8B";
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const bookingHref = "/book?advisor=" + encodeURIComponent(advisor.profile.id);
   const vcardHref = "/api/public/advisors/" + encodeURIComponent(slug) + "/vcard";
 
-  return <div className={styles.page} style={{"--accent":accent} as CSSProperties}>
+  return <div id="advisor-page" className={styles.page}>
+    <style nonce={nonce}>{`#advisor-page{--accent:${accent}}`}</style>
     <a className={styles.skip} href="#main">Zum Inhalt springen</a>
     <header className={styles.siteHeader}>
       <div className={styles.headerInner}>
@@ -59,8 +61,8 @@ export default async function AdvisorPage({ params }: { params: Promise<{ slug: 
         </div>
         <div className={styles.portraitFrame}>
           {advisor.profile.imageKey
-            ? <Image className={styles.portrait} unoptimized src={"/api/profile-images/"+encodeURIComponent(advisor.profile.imageKey)}
-                alt={"Profilbild von "+advisor.profile.name} width={640} height={800} priority/>
+            ? <img className={styles.portrait} src={"/api/profile-images/"+encodeURIComponent(advisor.profile.imageKey)}
+                alt={"Profilbild von "+advisor.profile.name} width={640} height={800} fetchPriority="high" decoding="async"/>
             : <div className={styles.portraitFallback} aria-hidden="true">{advisor.profile.name.slice(0,1).toUpperCase()}</div>}
         </div>
       </section>
