@@ -210,6 +210,6 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
-      - run: npm audit
+      - run: npm run security:audit
       - run: python3 tools/check_docs.py
       - run: git diff --check

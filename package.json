@@ -23,7 +23,8 @@
     "worker:notifications": "tsx scripts/notification-worker.ts",
     "test:browser": "playwright test",
     "db:backup": "tsx scripts/backup-postgres.ts",
-    "db:restore": "tsx scripts/restore-postgres.ts"
+    "db:restore": "tsx scripts/restore-postgres.ts",
+    "security:audit": "tsx scripts/security-audit.ts"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
