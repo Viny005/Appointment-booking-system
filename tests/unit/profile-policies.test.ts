@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertPublishable, assertServiceChange, createProfile, normalizeProfile, normalizeService, resolveMeetingMode, transitionProfile, validateRelation, validateService } from "@/modules/profiles/domain/policies";
+import { assertPublishable, assertServiceChange, createProfile, normalizeProfile, normalizePublicAdvisorPresence, normalizeService, resolveMeetingMode, transitionProfile, validateRelation, validateService } from "@/modules/profiles/domain/policies";
 import type { MeetingMode, ProfileDetails } from "@/modules/profiles/domain/model";
 import { date, profile, profileDetails, relation, service, serviceDetails } from "../fixtures/catalog";
 
@@ -34,6 +34,12 @@ describe("profile lifecycle", () => {
   it("normalizes only email domain", () => expect(normalizeProfile({ ...profileDetails, notificationEmail: " Name@EXAMPLE.TEST " }).notificationEmail).toBe("Name@example.test"));
   it.each(["https://example.test/a.png", "../a.png", "a/b.png", "C:\\a.png", "a.svg"])("rejects unsafe image key %s", imageKey => expect(() => normalizeProfile({ ...profileDetails, imageKey })).toThrow());
   it("ignores overposted profile identity/status", () => expect(normalizeProfile({ ...profileDetails, status: "ACTIVE", userId: "other" } as ProfileDetails)).toEqual(profileDetails));
+  it("normalizes a public advisor presence without exposing internal contact data", () => {
+    const value = normalizePublicAdvisorPresence({ publicSlug: " test-advisor ", aboutText: " Über mich ", publicEmail: " public@EXAMPLE.TEST ", publicPhone: " +49 6000 123 ", publicWebsite: "https://example.test/advisor", publicAddress: " Musterweg 1 ", accentColor: "#1F5F8B", showDvagPartners: true, digitalCardEnabled: true });
+    expect(value).toMatchObject({ publicSlug: "test-advisor", aboutText: "Über mich", publicEmail: "public@EXAMPLE.TEST", publicPhone: "+49 6000 123", publicAddress: "Musterweg 1" });
+  });
+  it.each(["Test Advisor","test_advisor","äöü","-test","test-"])("rejects unsafe public slug %s", publicSlug => expect(() => normalizePublicAdvisorPresence({ publicSlug, aboutText:null, publicEmail:null, publicPhone:null, publicWebsite:null, publicAddress:null, accentColor:null, showDvagPartners:true, digitalCardEnabled:true })).toThrow());
+  it.each(["http://example.test","https://user:pass@example.test"])("rejects unsafe public website %s", publicWebsite => expect(() => normalizePublicAdvisorPresence({ publicSlug:"test", aboutText:null, publicEmail:null, publicPhone:null, publicWebsite, publicAddress:null, accentColor:null, showDvagPartners:true, digitalCardEnabled:true })).toThrow());
 });
 
 describe("meeting configuration", () => {

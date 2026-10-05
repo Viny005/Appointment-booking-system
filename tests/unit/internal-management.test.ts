@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { internalRange, planInternalChange, requireInternalAccess, requireInternalActor, type InternalAppointment } from "@/modules/appointments/domain/internal-management";
+import { internalDetail, internalRange, planInternalChange, requireInternalAccess, requireInternalActor, type InternalAppointment } from "@/modules/appointments/domain/internal-management";
 import { service } from "../fixtures/catalog";
 const now = Date.parse("2027-01-01T00:00:00Z");
 const a: InternalAppointment = { id: "a", serviceId: "s1", service: service(), serviceName: "Advice", durationMinutes: 30, startAt: new Date("2027-01-06T08:00:00Z"), endAt: new Date("2027-01-06T08:30:00Z"), status: "CONFIRMED", cancelledAt: null, version: 0, calendarSequence: 0,
@@ -10,6 +10,7 @@ describe("internal authorization and calendar windows", () => {
  it("requires actual participation for advisors", () => { expect(() => requireInternalAccess({ active: true, role: "ADVISOR", profileId: "p2" }, a)).toThrow(); expect(() => requireInternalAccess({ active: true, role: "ADVISOR", profileId: "p1" }, a)).not.toThrow(); });
  it.each([["2027-03-28", 23], ["2027-10-31", 25]])("uses actual DST day length on %s", (date, hours) => { const range = internalRange(String(date), "day"); expect(range.to.getTime() - range.from.getTime()).toBe(Number(hours) * 3600000); });
  it("starts a Berlin week on Monday and month on its first day", () => { expect(internalRange("2027-01-06", "week").from.toISOString()).toBe("2027-01-03T23:00:00.000Z"); expect(internalRange("2027-01-06", "month").to.toISOString()).toBe("2027-01-31T23:00:00.000Z"); });
+ it("projects allowed modes and whether the appointment has ended", () => { const before=internalDetail(a,a.endAt.getTime()-1); expect(before.allowedModes).toContain("PHONE"); expect(before.ended).toBe(false); expect(internalDetail(a,a.endAt.getTime()).ended).toBe(true); });
 });
 describe("internal event matrix", () => {
  it("metadata changes version but not calendar", () => { const p = planInternalChange(a, { type: "details", version: 0, patch: { phone: "456" } }, now); expect(p.calendarChanged).toBe(false); expect(p.changedFields).toEqual(["phone"]); expect(p.resourceCheck).toBe(true); });

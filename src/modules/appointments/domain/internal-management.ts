@@ -35,8 +35,8 @@ export function internalDetail(a: InternalAppointment, now: number, policy: Rete
   if (retentionDue(a, now, policy)) a = { ...a, firstName: null, lastName: null, email: null, phone: null, address: null, remarks: null, placeName: null, visitAddress: null, phoneDirection: null, advisorPhone: null, onlineUrl: null, onlineProvider: null, guests: [] };
   return { id: a.id, startUtc: a.startAt.toISOString(), endUtc: a.endAt.toISOString(), status: a.status, version: a.version,
     serviceName: a.serviceName, durationMinutes: a.durationMinutes, firstName: a.firstName, lastName: a.lastName, email: a.email, phone: a.phone, address: a.address, remarks: a.remarks,
-    meetingMode: a.meetingMode, placeName: a.placeName, visitAddress: a.visitAddress, phoneDirection: a.phoneDirection, advisorPhone: a.advisorPhone, onlineUrl: a.onlineUrl, onlineProvider: a.onlineProvider,
-    participants: a.participants, guests: a.guests, retainedPersonalData: a.email !== null };
+    meetingMode: a.meetingMode, allowedModes: [...new Set([a.meetingMode, ...a.service.allowedMeetingModes])], placeName: a.placeName, visitAddress: a.visitAddress, phoneDirection: a.phoneDirection, advisorPhone: a.advisorPhone, onlineUrl: a.onlineUrl, onlineProvider: a.onlineProvider,
+    participants: a.participants, guests: a.guests, retainedPersonalData: a.email !== null, ended: now >= a.endAt.getTime() };
 }
 export type InternalPlan = { action: string; data: DetailPatch & { startAt?: Date; endAt?: Date; status?: AppointmentStatus }; calendarChanged: boolean; resourceCheck: boolean; noOp: boolean; guests?: string[]; changedFields: string[] };
 export function planInternalChange(a: InternalAppointment, command: InternalCommand, now: number): InternalPlan {

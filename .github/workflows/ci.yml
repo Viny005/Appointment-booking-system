@@ -1,9 +1,9 @@
 name: Application CI
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "sprint/**"]
   pull_request:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "sprint/**"]
 permissions:
   contents: read
 jobs:
@@ -177,6 +177,21 @@ jobs:
           npm run prisma:migrate
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/fixtures/audit-after-admin.sql
           npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - name: Verify upgrade from internal admin foundation to advisor public profile
+        env:
+          PGPASSWORD: ci-disposable-only
+        run: |
+          psql -h localhost -U appointment -d appointment_test -v ON_ERROR_STOP=1 -c 'CREATE DATABASE advisor_profile_upgrade_test'
+          export DATABASE_URL=postgresql://appointment:ci-disposable-only@localhost:5432/advisor_profile_upgrade_test
+          for migration in 20260929193000_identity_foundation 20260930090000_profile_service_domain 20260930100000_availability_engine 20260930120000_appointment_core 20260930150000_booking_draft 20260930170000_notification_outbox 20261001090000_customer_management 20261001100000_internal_appointment_management 20261001110000_audit_retention_security 20261002090000_internal_admin_foundation; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "prisma/migrations/$migration/migration.sql"
+            npx prisma migrate resolve --applied "$migration"
+          done
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO \"AdvisorProfile\" (\"id\",\"name\",\"title\",\"shortDescription\",\"notificationEmail\",\"status\",\"version\",\"createdAt\",\"updatedAt\") VALUES ('upgrade-profile','Existing Advisor','Existing Title','Existing description','existing@example.test','DRAFT',3,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"
+          npm run prisma:migrate
+          npm run prisma:migrate
+          test "$(psql "$DATABASE_URL" -Atc "SELECT count(*) FROM \"AdvisorProfile\" WHERE \"id\"='upgrade-profile' AND \"name\"='Existing Advisor' AND \"version\"=3 AND \"publicSlug\" IS NULL AND \"aboutText\" IS NULL AND \"publicEmail\" IS NULL AND \"publicPhone\" IS NULL AND \"publicWebsite\" IS NULL AND \"publicAddress\" IS NULL AND \"accentColor\" IS NULL AND \"showDvagPartners\"=true AND \"digitalCardEnabled\"=true")" = "1"
+          npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -195,6 +210,6 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
-      - run: npm audit
+      - run: npm run security:audit
       - run: python3 tools/check_docs.py
       - run: git diff --check

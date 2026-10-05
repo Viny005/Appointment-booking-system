@@ -11,8 +11,11 @@ import { getInternalSession } from "./internal-session";
 export function publicAvailability(occupancy: OccupancyReader = appointmentOccupancy(getDatabase())) {
   return new PublicAvailability(prismaAvailability(getDatabase()), occupancy, Date.now);
 }
+export function availabilityManagementForActor(actorId: string) {
+  return { actorId, management: new AvailabilityManagement(prismaAvailability(getDatabase()), randomUUID) };
+}
 export async function internalAvailability(headers: Headers) {
   const actor = await getInternalSession(headers, true);
   if (!actor) return null;
-  return { actorId: actor.id, management: new AvailabilityManagement(prismaAvailability(getDatabase()), randomUUID) };
+  return availabilityManagementForActor(actor.id);
 }

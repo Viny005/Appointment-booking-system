@@ -48,7 +48,7 @@ it("logs in with a DB session, enforces idle/active status and revokes on logout
   const cookie = response.headers.getSetCookie().map(value => value.split(";")[0]).join("; ");
   expect(cookie).toContain("session_token");
   const session = await db.session.findFirstOrThrow({ where: { userId: id } });
-  expect(await checkSession(store, session.id, new Date())).toEqual({ id, role: "ADMIN" });
+  expect(await checkSession(store, session.id, new Date())).toEqual({ id, role: "ADMIN", profileId: null, canManageOwnServices: false });
   await db.session.update({ where: { id: session.id }, data: { lastActivityAt: new Date(Date.now() - 1800000) } });
   expect(await checkSession(store, session.id, new Date(), true)).toBeNull();
   await db.user.update({ where: { id }, data: { active: false } });
@@ -57,6 +57,22 @@ it("logs in with a DB session, enforces idle/active status and revokes on logout
   await db.user.update({ where: { id }, data: { active: true } });
   expect((await post("sign-out", {}, cookie)).status).toBe(200);
   expect(await db.session.findUnique({ where: { id: session.id } })).toBeNull();
+});
+
+it("projects assigned advisor profile and own-service permission into the verified session", async () => {
+  const advisorId=randomUUID(), profileId=randomUUID(), sessionId=randomUUID();
+  try {
+    await db.user.create({ data: {
+      id:advisorId,email:`session-advisor-${advisorId}@example.test`,name:"Session Advisor",role:"ADVISOR",active:true,emailVerified:true,canManageOwnServices:true,
+      advisorProfile:{create:{id:profileId,name:"Session Advisor",title:"Advisor",shortDescription:"Session projection fixture",notificationEmail:`session-advisor-${advisorId}@example.test`}},
+    } });
+    await db.session.create({ data:{id:sessionId,token:randomUUID(),userId:advisorId,expiresAt:new Date(Date.now()+3600000),lastActivityAt:new Date()} });
+    expect(await checkSession(store,sessionId,new Date())).toEqual({id:advisorId,role:"ADVISOR",profileId,canManageOwnServices:true});
+  } finally {
+    await db.session.deleteMany({where:{userId:advisorId}});
+    await db.advisorProfile.deleteMany({where:{id:profileId}});
+    await db.user.deleteMany({where:{id:advisorId}});
+  }
 });
 
 it("queues a private single-use reset and revokes prior sessions after password change", async () => {

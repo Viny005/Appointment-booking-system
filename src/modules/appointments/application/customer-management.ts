@@ -1,6 +1,6 @@
 import { AppointmentError, requireAppointment } from "../domain/appointment";
 import { requireCapability, customerView, requireCustomerChange, validateCustomerCommand, type CustomerCommand, type ManagedAppointment } from "../domain/customer-management";
-import type { Slot } from "@/modules/availability/domain/values";
+import { datesBetween, localDate, type Slot } from "@/modules/availability/domain/values";
 
 export type MutationReceipt = { payloadHash: string; result: { status: string; version: number }; expiresAt: Date };
 export interface CustomerManagementReader {
@@ -25,6 +25,7 @@ export class CustomerManagement {
   }
   async read(raw: string) { const hash = this.capability(raw); return this.repository.read(async tx => { const a = await tx.load(hash), now = this.now(); requireCapability(a, now); return customerView(a, now); }); }
   async slots(raw: string, date: string) { const hash = this.capability(raw); return this.repository.read(async tx => { const a = await tx.load(hash), now = this.now(); requireCapability(a, now); requireCustomerChange(a, a.version, now); return tx.slots(a, date, now); }); }
+  async days(raw: string, from: string, to: string) { const hash = this.capability(raw), days = datesBetween(localDate(from), localDate(to)); return this.repository.read(async tx => { const a = await tx.load(hash), now = this.now(); requireCapability(a, now); requireCustomerChange(a, a.version, now); const result:string[]=[]; for (const date of days) if ((await tx.slots(a,date,now)).length) result.push(date); return result; }); }
   async change(raw: string, key: string, input: CustomerCommand) {
     const hash = this.capability(raw), command = validateCustomerCommand(input);
     requireAppointment(typeof key === "string" && /^[A-Za-z0-9_-]{16,128}$/.test(key), "Ungültiger Befehlsschlüssel.");

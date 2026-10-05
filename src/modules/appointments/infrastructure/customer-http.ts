@@ -17,7 +17,7 @@ export function customerHttp(api: CustomerManagement, origin: string) {
       let body;
       try { body = JSON.parse(new TextDecoder().decode(data)); } catch { return response({ error: "INVALID_INPUT" }, 400); }
       if (!body || typeof body !== "object" || Array.isArray(body)) return response({ error: "INVALID_INPUT" }, 400);
-      const value = body.action === "read" ? await api.read(body.token) : body.action === "slots" ? await api.slots(body.token, body.date) : body.action === "change" ? await api.change(body.token, body.commandKey, body.command) : undefined;
+      const value = body.action === "read" ? await api.read(body.token) : body.action === "days" ? await api.days(body.token, body.from, body.to) : body.action === "slots" ? await api.slots(body.token, body.date) : body.action === "change" ? await api.change(body.token, body.commandKey, body.command) : undefined;
       return value === undefined ? response({ error: "INVALID_ACTION" }, 400) : response({ value });
     } catch (e) {
       if (e instanceof AppointmentError || e instanceof CatalogError || e instanceof AvailabilityError) return response({ error: e.code, message: e.message }, e.code === "NOT_FOUND" ? 404 : e.code === "FORBIDDEN" ? 403 : e.code === "CONFLICT" ? 409 : e.code === "UNAVAILABLE" ? 503 : 400);
