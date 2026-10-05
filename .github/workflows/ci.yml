@@ -1,9 +1,9 @@
 name: Application CI
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "sprint/**"]
   pull_request:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "sprint/**"]
 permissions:
   contents: read
 jobs:
