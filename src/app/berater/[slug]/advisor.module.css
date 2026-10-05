@@ -247,7 +247,7 @@ a.contactCard:hover{border-color:var(--accent,#1f5f8b);box-shadow:0 8px 24px rgb
 .digitalCard .secondary{flex:0 0 auto}
 .partnerSection{border-top:1px solid var(--line)}
 .partnerNote{font-size:.91rem}
-.partnerNote a{color:var(--accent,#1f5f8b)}
+.partnerNote a{color:var(--accent,#1f5f8b);text-decoration:underline;text-underline-offset:.18em}
 .partnerGroup{margin-top:1.8rem}
 .partnerGroup h3{font-size:1rem;margin-bottom:.8rem}
 .partnerGrid{

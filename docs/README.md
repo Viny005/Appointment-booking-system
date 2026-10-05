@@ -21,4 +21,4 @@ Die Spezifikation ist die fachliche Quelle. Architektur konkretisiert sie; Abwei
 
 IDs: G (Ziele), NG (Nichtziele), SC (Erfolgskriterien), CON (Constraints), UC (Anwendungsfälle), AF (Funktionen), NFR (Qualitätsanforderungen), QG (Architekturziele), QS (Prüfszenarien), R (Risiken), ADR (Entscheidungen). Die Quelldefinition steht genau einmal als Überschrift oder erste Tabellenzelle; Register und Matrix referenzieren sie per Link.
 
-[Implementierungsbereitschaft](READY-FOR-IMPLEMENTATION.md) · [Deutschland-Checkliste](LEGAL-COMPLIANCE-DE.md) · [Production-Entscheidungen](PRODUCTION-DECISIONS.md) · [Deployment-Runbook](PRODUCTION-DEPLOYMENT-RUNBOOK.md) · [Dependency-Ausnahme](SECURITY-DEPENDENCY-EXCEPTION.md).
+[Implementierungsbereitschaft](READY-FOR-IMPLEMENTATION.md) · [Deutschland-Checkliste](LEGAL-COMPLIANCE-DE.md) · [Production-Entscheidungen](PRODUCTION-DECISIONS.md) · [Deployment-Runbook](PRODUCTION-DEPLOYMENT-RUNBOOK.md) · [Dependency-Ausnahme](SECURITY-DEPENDENCY-EXCEPTION.md) · [Sprint 20 Reference-Site-Parity](SPRINT20-REFERENCE-SITE-PARITY.md).
