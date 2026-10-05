@@ -1,4 +1,4 @@
-﻿DO $$ BEGIN
+DO $$ BEGIN
   IF (SELECT count(*) FROM "User" WHERE id = 'migration-user'
       AND email = 'migration@example.test' AND NOT "canManageOwnServices") <> 1 THEN
     RAISE EXCEPTION 'Foundation identity was not preserved';
@@ -10,4 +10,3 @@
     RAISE EXCEPTION 'Domain migration constraints are missing';
   END IF;
 END $$;
-

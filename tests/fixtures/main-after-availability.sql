@@ -1,4 +1,4 @@
-﻿DO $$ BEGIN
+DO $$ BEGIN
   IF (SELECT count(*) FROM "AdvisorProfile" WHERE id = 'availability-upgrade-profile' AND "availabilityVersion" = 0 AND status = 'DRAFT') <> 1 THEN
     RAISE EXCEPTION 'Existing profile was not preserved';
   END IF;
@@ -12,4 +12,3 @@
     RAISE EXCEPTION 'Availability constraints missing';
   END IF;
 END $$;
-
