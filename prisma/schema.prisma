@@ -131,10 +131,32 @@ model AdvisorProfile {
   @@index([status])
 }
 
+model ServiceTemplate {
+  id                  String @id
+  name                String
+  description         String
+  durationMinutes     Int
+  meetingModePolicy   MeetingModePolicy
+  allowedMeetingModes MeetingMode[]
+  placeName           String?
+  visitAddress        String?
+  phoneDirection      PhoneDirection @default(ADVISOR_CALLS_CLIENT)
+  advisorPhone        String?
+  onlineUrl           String?
+  onlineProvider      String?
+  version             Int @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  profileServices     Service[]
+  @@index([name])
+}
+
 model Service {
   id                  String @id
   advisorProfileId    String
   advisorProfile      AdvisorProfile @relation(fields: [advisorProfileId], references: [id], onDelete: Restrict)
+  serviceTemplateId   String?
+  serviceTemplate     ServiceTemplate? @relation(fields: [serviceTemplateId], references: [id], onDelete: SetNull)
   name                String
   description         String
   durationMinutes     Int
@@ -152,6 +174,8 @@ model Service {
   updatedAt           DateTime @updatedAt
   appointments Appointment[]
   @@index([advisorProfileId, active])
+  @@index([serviceTemplateId])
+  @@unique([advisorProfileId, serviceTemplateId])
 }
 
 model ProfileRelation {

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { internalCatalog } from "@/shared/web/profile-catalog";
 import { internalAvailability } from "@/shared/web/availability";
-import type { Service } from "@/modules/profiles/domain/model";
+import { ServiceFieldsEditor } from "@/app/internal/service-fields-editor";
 import { advisorServicesAction } from "./actions";
 import styles from "../../internal.module.css";
 
@@ -11,27 +11,6 @@ export const dynamic="force-dynamic";
 const dayNames=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 const clock=(value:number)=>value===1440?"24:00":String(Math.floor(value/60)).padStart(2,"0")+":"+String(value%60).padStart(2,"0");
 const rangeText=(ranges:{start:number;end:number}[])=>ranges.map(r=>clock(r.start)+"-"+clock(r.end)).join(", ");
-
-function ServiceFields({service}:{service?:Service}){
-  const has=(mode:"IN_PERSON"|"PHONE"|"ONLINE")=>service?.allowedMeetingModes.includes(mode)??mode==="IN_PERSON";
-  return <>
-    <label className={styles.field}>Name<input name="name" defaultValue={service?.name??""} required/></label>
-    <label className={styles.field}>Beschreibung<input name="description" defaultValue={service?.description??""} required/></label>
-    <label className={styles.field}>Dauer (Minuten)<input name="duration" type="number" min="15" max="480" step="15" defaultValue={service?.durationMinutes??60} required/></label>
-    <label className={styles.field}>Modus-Regel<select name="policy" defaultValue={service?.meetingModePolicy??"CLIENT_CHOICE"}><option value="CLIENT_CHOICE">Kunde wählt</option><option value="FIXED">Fester Modus</option></select></label>
-    <fieldset className={styles.field}><legend>Erlaubte Terminarten</legend>
-      <label><input name="mode_IN_PERSON" type="checkbox" defaultChecked={has("IN_PERSON")}/> Vor Ort</label>
-      <label><input name="mode_PHONE" type="checkbox" defaultChecked={has("PHONE")}/> Telefon</label>
-      <label><input name="mode_ONLINE" type="checkbox" defaultChecked={has("ONLINE")}/> Online</label>
-    </fieldset>
-    <label className={styles.field}>Ort (für Vor-Ort-Termine)<input name="placeName" defaultValue={service?.placeName??""}/></label>
-    <label className={styles.field}>Adresse (für Vor-Ort-Termine)<input name="address" defaultValue={service?.visitAddress??""}/></label>
-    <label className={styles.field}>Telefonrichtung<select name="phoneDirection" defaultValue={service?.phoneDirection??"ADVISOR_CALLS_CLIENT"}><option value="ADVISOR_CALLS_CLIENT">Berater ruft Kunden an</option><option value="CLIENT_CALLS_ADVISOR">Kunde ruft Berater an</option></select></label>
-    <label className={styles.field}>Berater-Telefon (wenn Kunde anruft)<input name="advisorPhone" type="tel" defaultValue={service?.advisorPhone??""}/></label>
-    <label className={styles.field}>Online-Anbieter<input name="onlineProvider" defaultValue={service?.onlineProvider??""} placeholder="z. B. Microsoft Teams"/></label>
-    <label className={styles.field}>Online-Link<input name="onlineUrl" type="url" defaultValue={service?.onlineUrl??""} placeholder="https://..."/></label>
-  </>;
-}
 
 export default async function AdvisorServices({searchParams}:{searchParams:Promise<{updated?:string,error?:string}>}){
   const q=await searchParams,api=await internalCatalog(await headers());
@@ -66,16 +45,33 @@ export default async function AdvisorServices({searchParams}:{searchParams:Promi
       {!api.canManageOwnServices&&<p className={styles.empty}>Sie können die bestehenden Leistungen sehen, aber Änderungen müssen von der Administration freigegeben werden.</p>}
       <div className={styles.grid}>{services.map(service=><article className={styles.card} key={service.id}>
         <h3>{service.name}</h3>
-        <div className={styles.meta}><span>{service.active?"Aktiv":"Inaktiv"}</span><span>{service.durationMinutes} Minuten</span></div>
-        {api.canManageOwnServices?<form action={advisorServicesAction} className={styles.toolbar}>
-          <input type="hidden" name="operation" value="service-update"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
-          <ServiceFields service={service}/><button className={styles.button}>Leistung speichern</button>
-        </form>:<p>{service.description}</p>}
-        {api.canManageOwnServices&&<form action={advisorServicesAction}><input type="hidden" name="operation" value="service-toggle"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/><input type="hidden" name="active" value={String(!service.active)}/><button className={styles.button}>{service.active?"Deaktivieren":"Aktivieren"}</button></form>}
+        <div className={styles.meta}>
+          <span>{service.active?"Aktiv":"Inaktiv"}</span>
+          <span>{service.durationMinutes} Minuten</span>
+          <span>{service.serviceTemplateId?"Zentraler Leistungskatalog":"Individuell"}</span>
+        </div>
+        {service.serviceTemplateId?<>
+          <p>{service.description}</p>
+          <p className={styles.empty}>Diese Leistung wird zentral durch die Administration verwaltet. Inhalt und Freischaltung können hier nicht geändert werden.</p>
+        </>:api.canManageOwnServices?<>
+          <form action={advisorServicesAction} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-update"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
+            <ServiceFieldsEditor value={service} operationalRequired={service.active} defaultMode="IN_PERSON"/><button className={styles.button}>Leistung speichern</button>
+          </form>
+          <form action={advisorServicesAction}>
+            <input type="hidden" name="operation" value="service-toggle"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/><input type="hidden" name="active" value={String(!service.active)}/>
+            <button className={styles.button}>{service.active?"Deaktivieren":"Aktivieren"}</button>
+          </form>
+          <form action={advisorServicesAction} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-delete"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
+            <label><input type="checkbox" required/> Individuelle Leistung wirklich löschen</label>
+            <button className={styles.button}>Leistung löschen</button>
+          </form>
+        </>:<p>{service.description}</p>}
       </article>)}</div>
-      {api.canManageOwnServices&&<><h3>Neue Leistung</h3><form action={advisorServicesAction} className={styles.toolbar}>
-        <input type="hidden" name="operation" value="service-create"/><ServiceFields/><button className={styles.button}>Leistung anlegen</button>
-      </form><p className={styles.empty}>Neue Leistungen werden zunächst inaktiv angelegt und vor Aktivierung vollständig validiert.</p></>}
+      {api.canManageOwnServices&&<><h3>Neue individuelle Leistung</h3><form action={advisorServicesAction} className={styles.toolbar}>
+        <input type="hidden" name="operation" value="service-create"/><ServiceFieldsEditor operationalRequired={false} defaultMode="IN_PERSON"/><button className={styles.button}>Individuelle Leistung anlegen</button>
+      </form><p className={styles.empty}>Diese Leistung gehört nur zu Ihrem Profil. Zentrale Leistungen werden ausschließlich von der Administration freigeschaltet.</p></>}
     </section>
 
     <section className={styles.panel}>

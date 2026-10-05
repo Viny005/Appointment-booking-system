@@ -16,8 +16,10 @@ const commands = new CatalogCommands(repo, { id: randomUUID, now: () => new Date
 const catalog = new PublicCatalog(repo);
 const admin = randomUUID(); const otherAdmin = randomUUID(); const advisor = randomUUID();
 const ownedProfiles: string[] = [];
+const ownedTemplates: string[] = [];
 function value<T>(result: Result<T>): T { if (!result.ok) throw new Error(result.error.code + ": " + result.error.message); return result.value; }
 async function draft() { const p = value(await commands.createProfile(admin, profileDetails)); ownedProfiles.push(p.id); return p; }
+async function template(details = serviceDetails) { const t = value(await commands.createServiceTemplate(admin, details)); ownedTemplates.push(t.id); return t; }
 async function published() {
   const p = await draft(); const s = value(await commands.createService(admin, p.id, serviceDetails, true));
   return { profile: value(await commands.setProfileStatus(admin, p.id, p.version, "ACTIVE")), service: s };
@@ -28,6 +30,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await db.profileRelation.deleteMany({ where: { OR: [{ sourceProfileId: { in: ownedProfiles } }, { targetProfileId: { in: ownedProfiles } }] } });
   await db.service.deleteMany({ where: { advisorProfileId: { in: ownedProfiles } } });
+  await db.serviceTemplate.deleteMany({ where: { id: { in: ownedTemplates } } });
   await db.advisorProfile.deleteMany({ where: { id: { in: ownedProfiles } } });
   await db.user.deleteMany({ where: { id: { in: [admin, otherAdmin, advisor] } } });
   await db.$disconnect();
@@ -84,6 +87,58 @@ describe("profile application persistence", () => {
     expect(await commands.createProfile("unknown", profileDetails)).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
     value(await commands.assignUser(admin, p.id, 1, null));
   });
+  it("keeps profile-local services independent and lets authorized owners delete unused ones", async () => {
+    const p = await draft();
+    value(await commands.assignUser(admin, p.id, p.version, advisor));
+    await db.user.update({ where: { id: advisor }, data: { canManageOwnServices: true } });
+    const local = value(await commands.createService(advisor, p.id, serviceDetails, false));
+    expect(local.serviceTemplateId).toBeNull();
+    expect(value(await commands.deleteService(advisor, p.id, local.id, local.version))).toEqual({ id: local.id });
+    expect(await db.service.count({ where: { id: local.id } })).toBe(0);
+    value(await commands.assignUser(admin, p.id, 1, null));
+  });
+
+  it("creates a central service, releases it to a profile and synchronizes later edits", async () => {
+    const p = await draft();
+    const central = await template();
+    const released = value(await commands.setServiceTemplateForProfile(admin, central.id, central.version, p.id, null, true));
+    expect(released).toMatchObject({ advisorProfileId: p.id, serviceTemplateId: central.id, active: true });
+
+    const updated = value(await commands.updateServiceTemplate(admin, central.id, central.version, { ...serviceDetails, name: "Zentrale Beratung aktualisiert" }));
+    const stored = await db.service.findUniqueOrThrow({ where: { id: released.id } });
+    expect(stored).toMatchObject({ name: "Zentrale Beratung aktualisiert", serviceTemplateId: central.id, active: true, version: 1 });
+    expect(await commands.updateService(admin, p.id, released.id, stored.version, serviceDetails)).toMatchObject({ ok: false, error: { code: "CATALOG_MANAGED" } });
+    expect(await commands.setServiceActive(admin, p.id, released.id, stored.version, false)).toMatchObject({ ok: false, error: { code: "CATALOG_MANAGED" } });
+
+    expect(await commands.deleteServiceTemplate(admin, central.id, updated.version)).toMatchObject({ ok: false, error: { code: "TEMPLATE_IN_USE" } });
+    const blocked = value(await commands.setServiceTemplateForProfile(admin, central.id, updated.version, p.id, stored.version, false));
+    value(await commands.deleteServiceTemplate(admin, central.id, updated.version));
+    expect(await db.serviceTemplate.findUnique({ where: { id: central.id } })).toBeNull();
+    expect(await db.service.findUniqueOrThrow({ where: { id: blocked.id } })).toMatchObject({ serviceTemplateId: null, active: false });
+  });
+
+  it("serializes two administrators releasing the same catalog service to one profile", async () => {
+    const p = await draft();
+    const central = await template({ ...serviceDetails, name: "Concurrent central" });
+    const results = await Promise.all([
+      commands.setServiceTemplateForProfile(admin, central.id, central.version, p.id, null, true),
+      commands.setServiceTemplateForProfile(otherAdmin, central.id, central.version, p.id, null, true),
+    ]);
+    expect(results.filter(result => result.ok)).toHaveLength(1);
+    expect(results.find(result => !result.ok)).toMatchObject({ error: { code: "CONFLICT" } });
+    expect(await db.service.count({ where: { advisorProfileId: p.id, serviceTemplateId: central.id } })).toBe(1);
+  });
+
+  it("keeps the global catalog admin-only even when an advisor may manage local services", async () => {
+    const p = await draft();
+    value(await commands.assignUser(admin, p.id, p.version, advisor));
+    await db.user.update({ where: { id: advisor }, data: { canManageOwnServices: true } });
+    const central = await template({ ...serviceDetails, name: "Admin-only central" });
+    expect(await commands.createServiceTemplate(advisor, serviceDetails)).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(await commands.setServiceTemplateForProfile(advisor, central.id, central.version, p.id, null, true)).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    value(await commands.assignUser(admin, p.id, 1, null));
+  });
+
   it("filters public services and profiles without leaking private configuration", async () => {
     const { profile: p, service: s } = await published();
     value(await commands.createService(admin, p.id, { ...serviceDetails, name: "Inactive" }, false));

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { internalCatalog } from "@/shared/web/profile-catalog";
 import { internalAvailability } from "@/shared/web/availability";
 import { internalAdminService } from "@/shared/web/internal-admin";
-import type { Service } from "@/modules/profiles/domain/model";
+import { ServiceFieldsEditor } from "@/app/internal/service-fields-editor";
 import { catalogAction } from "./actions";
 import { uploadProfileImage } from "./image-action";
 import styles from "../../../internal.module.css";
@@ -15,36 +15,16 @@ const dayNames=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag",
 const clock=(value:number)=>value===1440?"24:00":String(Math.floor(value/60)).padStart(2,"0")+":"+String(value%60).padStart(2,"0");
 const rangeText=(ranges:{start:number;end:number}[])=>ranges.map(r=>clock(r.start)+"-"+clock(r.end)).join(", ");
 
-function ServiceFields({service}:{service?:Service}){
-  const has=(mode:"IN_PERSON"|"PHONE"|"ONLINE")=>service?.allowedMeetingModes.includes(mode)??mode==="IN_PERSON";
-  return <>
-    <label className={styles.field}>Name<input name="name" defaultValue={service?.name??""} required/></label>
-    <label className={styles.field}>Beschreibung<input name="description" defaultValue={service?.description??""} required/></label>
-    <label className={styles.field}>Dauer (Minuten)<input name="duration" type="number" min="15" max="480" step="15" defaultValue={service?.durationMinutes??60} required/></label>
-    <label className={styles.field}>Modus-Regel<select name="policy" defaultValue={service?.meetingModePolicy??"CLIENT_CHOICE"}><option value="CLIENT_CHOICE">Kunde wählt</option><option value="FIXED">Fester Modus</option></select></label>
-    <fieldset className={styles.field}><legend>Erlaubte Terminarten</legend>
-      <label><input name="mode_IN_PERSON" type="checkbox" defaultChecked={has("IN_PERSON")}/> Vor Ort</label>
-      <label><input name="mode_PHONE" type="checkbox" defaultChecked={has("PHONE")}/> Telefon</label>
-      <label><input name="mode_ONLINE" type="checkbox" defaultChecked={has("ONLINE")}/> Online</label>
-    </fieldset>
-    <label className={styles.field}>Ort (für Vor-Ort-Termine)<input name="placeName" defaultValue={service?.placeName??""}/></label>
-    <label className={styles.field}>Adresse (für Vor-Ort-Termine)<input name="address" defaultValue={service?.visitAddress??""}/></label>
-    <label className={styles.field}>Telefonrichtung<select name="phoneDirection" defaultValue={service?.phoneDirection??"ADVISOR_CALLS_CLIENT"}><option value="ADVISOR_CALLS_CLIENT">Berater ruft Kunden an</option><option value="CLIENT_CALLS_ADVISOR">Kunde ruft Berater an</option></select></label>
-    <label className={styles.field}>Berater-Telefon (wenn Kunde anruft)<input name="advisorPhone" type="tel" defaultValue={service?.advisorPhone??""}/></label>
-    <label className={styles.field}>Online-Anbieter<input name="onlineProvider" defaultValue={service?.onlineProvider??""} placeholder="z. B. Microsoft Teams"/></label>
-    <label className={styles.field}>Online-Link<input name="onlineUrl" type="url" defaultValue={service?.onlineUrl??""} placeholder="https://..."/></label>
-  </>;
-}
-
 export default async function ProfileManagement({params,searchParams}:{params:Promise<{id:string}>,searchParams:Promise<{updated?:string,error?:string}>}){
   const {id}=await params,q=await searchParams,api=await internalCatalog(await headers());
   if(!api)redirect("/login");
   if(api.role!=="ADMIN")redirect("/internal/advisor");
-  const [result,allProfiles,users,av]=await Promise.all([
+  const [result,allProfiles,users,av,serviceTemplates]=await Promise.all([
     api.queries.getProfile(id),
     api.queries.listProfiles(),
     internalAdminService().list(api.actorId),
     internalAvailability(await headers()),
+    api.queries.listServiceTemplates(),
   ]);
   if(!result.ok||!result.value.aggregate)return <main className={styles.main}><p role="alert">Profil nicht gefunden.</p></main>;
 
@@ -57,6 +37,9 @@ export default async function ProfileManagement({params,searchParams}:{params:Pr
   const profileNames=new Map(allProfiles.ok?allProfiles.value.map(x=>[x.profile.id,x.profile.name]):[]);
   const relationTargets=allProfiles.ok?allProfiles.value.filter(x=>x.profile.id!==id):[];
   const advisorUsers=users.ok?users.value.filter(u=>u.role==="ADVISOR"):[];
+  const templates=serviceTemplates.ok?serviceTemplates.value:[];
+  const templateById=new Map(templates.map(item=>[item.template.id,item.template]));
+  const unlinkedTemplates=templates.filter(item=>!services.some(service=>service.serviceTemplateId===item.template.id));
 
   return <main id="main" className={styles.main}>
     <p><Link href="/internal/admin/catalog">← Profile</Link></p>
@@ -120,23 +103,86 @@ export default async function ProfileManagement({params,searchParams}:{params:Pr
 
     <section className={styles.panel}>
       <h2>Leistungen</h2>
-      <div className={styles.grid}>{services.map(service=><article className={styles.card} key={service.id}>
-        <h3>{service.name}</h3>
-        <div className={styles.meta}><span>{service.active?"Aktiv":"Inaktiv"}</span><span>Version {service.version}</span></div>
-        <form action={action} className={styles.toolbar}>
-          <input type="hidden" name="operation" value="service-update"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/>
-          <ServiceFields service={service}/>
-          <button className={styles.button}>Leistung speichern</button>
-        </form>
-        <form action={action}><input type="hidden" name="operation" value="service-toggle"/><input type="hidden" name="serviceId" value={service.id}/><input type="hidden" name="version" value={service.version}/><input type="hidden" name="active" value={String(!service.active)}/><button className={styles.button}>{service.active?"Deaktivieren":"Aktivieren"}</button></form>
-      </article>)}</div>
-      <h3>Neue Leistung</h3>
+      <p>Dieses Profil kann individuelle Leistungen besitzen und zusätzlich zentrale Leistungen aus dem <Link href="/internal/admin/services">Leistungskatalog</Link> erhalten.</p>
+
+      <div className={styles.grid}>{services.map(service=>{
+        const template=service.serviceTemplateId?templateById.get(service.serviceTemplateId):undefined;
+        if(template){
+          return <article className={styles.card} key={service.id}>
+            <h3>{service.name}</h3>
+            <div className={styles.meta}>
+              <span>{service.active?"Freigeschaltet":"Gesperrt"}</span>
+              <span>Zentral verwaltet</span>
+              <span>{service.durationMinutes} Minuten</span>
+              <span>Version {service.version}</span>
+            </div>
+            <p>{service.description}</p>
+            <p className={styles.empty}>Die Inhalte dieser Leistung werden zentral im Leistungskatalog bearbeitet. Änderungen werden automatisch auf dieses Profil übernommen.</p>
+            <div className={styles.toolbar}>
+              <Link href="/internal/admin/services">Im Leistungskatalog bearbeiten</Link>
+            </div>
+            <form action={action}>
+              <input type="hidden" name="operation" value="template-profile-toggle"/>
+              <input type="hidden" name="templateId" value={template.id}/>
+              <input type="hidden" name="templateVersion" value={template.version}/>
+              <input type="hidden" name="serviceVersion" value={service.version}/>
+              <input type="hidden" name="active" value={String(!service.active)}/>
+              <button className={styles.button}>{service.active?"Für dieses Profil sperren":"Für dieses Profil freischalten"}</button>
+            </form>
+          </article>;
+        }
+        return <article className={styles.card} key={service.id}>
+          <h3>{service.name}</h3>
+          <div className={styles.meta}>
+            <span>{service.active?"Aktiv":"Inaktiv"}</span>
+            <span>Individuell für dieses Profil</span>
+            <span>Version {service.version}</span>
+          </div>
+          <form action={action} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-update"/>
+            <input type="hidden" name="serviceId" value={service.id}/>
+            <input type="hidden" name="version" value={service.version}/>
+            <ServiceFieldsEditor value={service} operationalRequired={service.active} defaultMode="IN_PERSON"/>
+            <button className={styles.button}>Individuelle Leistung speichern</button>
+          </form>
+          <form action={action} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-toggle"/>
+            <input type="hidden" name="serviceId" value={service.id}/>
+            <input type="hidden" name="version" value={service.version}/>
+            <input type="hidden" name="active" value={String(!service.active)}/>
+            <button className={styles.button}>{service.active?"Deaktivieren":"Aktivieren"}</button>
+          </form>
+          <form action={action} className={styles.toolbar}>
+            <input type="hidden" name="operation" value="service-delete"/>
+            <input type="hidden" name="serviceId" value={service.id}/>
+            <input type="hidden" name="version" value={service.version}/>
+            <label><input type="checkbox" required/> Individuelle Leistung wirklich löschen</label>
+            <button className={styles.button}>Leistung löschen</button>
+          </form>
+        </article>;
+      })}</div>
+
+      <h3>Zentrale Leistung für dieses Profil freischalten</h3>
+      {unlinkedTemplates.length===0?<p className={styles.empty}>Alle zentralen Leistungen sind diesem Profil bereits zugeordnet oder es gibt noch keine zentralen Leistungen.</p>:
+      <div className={styles.grid}>{unlinkedTemplates.map(({template})=><form action={action} className={styles.card} key={template.id}>
+        <input type="hidden" name="operation" value="template-profile-toggle"/>
+        <input type="hidden" name="templateId" value={template.id}/>
+        <input type="hidden" name="templateVersion" value={template.version}/>
+        <input type="hidden" name="serviceVersion" value=""/>
+        <input type="hidden" name="active" value="true"/>
+        <strong>{template.name}</strong>
+        <p>{template.description}</p>
+        <div className={styles.meta}><span>{template.durationMinutes} Minuten</span><span>Zentraler Katalog</span></div>
+        <button className={styles.button}>Für dieses Profil freischalten</button>
+      </form>)}</div>}
+
+      <h3>Individuelle Leistung nur für dieses Profil anlegen</h3>
       <form action={action} className={styles.toolbar}>
         <input type="hidden" name="operation" value="service-create"/>
-        <ServiceFields/>
-        <button className={styles.button}>Leistung anlegen</button>
+        <ServiceFieldsEditor operationalRequired={false} defaultMode="IN_PERSON"/>
+        <button className={styles.button}>Individuelle Leistung anlegen</button>
       </form>
-      <p className={styles.empty}>Neue Leistungen werden zunächst inaktiv angelegt. Vor der Aktivierung prüft der Server alle Pflichtangaben der gewählten Terminarten.</p>
+      <p className={styles.empty}>Individuelle Leistungen gehören nur zu diesem Profil. Zentrale Leistungen werden stattdessen im Leistungskatalog angelegt.</p>
     </section>
 
     <section className={styles.panel}>

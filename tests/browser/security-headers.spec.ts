@@ -35,7 +35,7 @@ test("public rendered pages produce no unexpected CSP violations", async ({ page
 });
 
 test("internal routes redirect anonymous users to the semantic login form", async ({ page }) => {
-  for (const path of ["/internal","/internal/admin","/internal/admin/catalog","/internal/advisor","/internal/advisor/services","/internal/appointments"]) {
+  for (const path of ["/internal","/internal/admin","/internal/admin/catalog","/internal/admin/services","/internal/advisor","/internal/advisor/services","/internal/appointments"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login$/);
   }

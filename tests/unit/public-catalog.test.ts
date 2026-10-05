@@ -6,7 +6,7 @@ import { profile, relation, service } from "../fixtures/catalog";
 
 function catalog(profiles: ProfileAggregate[], relations: ProfileRelation[] = []) {
   const getRelations = vi.fn(async (sourceProfileId: string) => relations.filter(row => row.sourceProfileId === sourceProfileId));
-  const repo: CatalogRepository = { read: work => work({ listProfiles: async () => profiles, getProfile: async id => profiles.find(row => row.profile.id === id) ?? null, getRelations }), write: async () => { throw new Error("read only"); } };
+  const repo: CatalogRepository = { read: work => work({ listProfiles: async () => profiles, getProfile: async id => profiles.find(row => row.profile.id === id) ?? null, getRelations, listServiceTemplates: async () => [], getServiceTemplate: async () => null }), write: async () => { throw new Error("read only"); } };
   return { useCases: new PublicCatalog(repo), getRelations };
 }
 const primary = { profile: profile(), services: [service()] };

@@ -1,6 +1,6 @@
 export type CatalogErrorCode = "INVALID_INPUT" | "PROFILE_INCOMPLETE" | "LAST_ACTIVE_SERVICE"
   | "INVALID_TRANSITION" | "NOT_FOUND" | "FORBIDDEN" | "CONFLICT"
-  | "REQUIRED_PARTICIPANT_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+  | "REQUIRED_PARTICIPANT_UNAVAILABLE" | "CATALOG_MANAGED" | "TEMPLATE_IN_USE" | "PERSISTENCE_UNAVAILABLE";
 export class CatalogError extends Error {
   constructor(public readonly code: CatalogErrorCode, message: string, public readonly field?: string) {
     super(message);
